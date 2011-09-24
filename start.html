@@ -1,0 +1,4458 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <title>jComponentGameEngine - Engine & Editor - Code, design levels and play in Javascript&jQuery!</title>
+  </head>
+  <body onResize="gameEngineObj.editorAdaptScreenPosition();" onLoad="gameEngineObj.editorAdaptScreenPosition();">
+  	
+<!-- GAME ENGINE ONLY THINGS -->
+<!-- without editor: cut away [editor][/editor] - \[editor(.|\r)*editor\]  --> 
+<!--   [editor]sdfasdfasdf sadfasfdsadfasdaffd[/editor] -->
+
+<!-- todo: once -->
+<!-- // > /*  */ 
+     Textwrangler //(.*)  /* \1 */ >
+  	<!-- editor styles -->
+
+  	<style>
+  		
+  		body { font-family: helvetica, sans serif; background: white; }
+  		a { color: #440000; }	
+  		 .editorDivContainer, #divGameEngineConsole { background: #eeeeee; font-family: helvetica, sans serif; font-size: 14px; border: 1px solid black; }
+			.editorDivContainer ul { list-style-type:none; padding: 0px; padding-left: 0px; padding-top:1px; }
+	  		 	.editorDivContainer li {  padding-left: 15px; }
+	  		.editorDivContainer a { text-decoration: none;  color: #331111; }
+			.editorDivContainer form { padding: 0px; }
+		  .editorInspectorSceneGraphAddObject { float: right; padding: 5px; } 
+		
+		.editorAttentionNoStoragePossiblity { border: 2px solid red; background: white; color: red; size: 30px; } 
+		
+		.editorDivProjectManagementContainer { border-top: 1px dotted black;  border-bottom: 1px dotted black;  }
+		  .editorButton, .editorButtonSmall { background: #999999; color: black; padding-left: 10px; padding-right: 10px; border: 1px solid black; display: inline; }
+		  .editorButton  a, .editorButtonSmall a { color: black; text-decoration: none; }
+		  .editorButtonSmall {  padding-left: 2px; padding-right: 2px; }
+
+		  .editorSceneButtonSmall, .editorSceneButtonSmallSelected  {  padding-left: 2px; padding-right: 2px; background: #eeeeee; color: black; padding-left: 3px; padding-right: 3px; border: 1px solid black; display: inline; color: black; text-decoration: none;  }
+		  .editorSceneButtonSmallSelected  {   background: #aa999999 ;   }
+
+		
+		 .editorDivMode { border: 1px solid black; background: #dddddd; font-size:14px; }
+			#editorPlayButton, #editorPlayButton a, #editorPlayRunningButton, #editorPlayRunningButton a  { border: 1px solid black; background: #554444; padding-left: 5px; padding-right: 5px;  color: white; display: inline;}
+			#editorPlayRunningButton {  display: none; }		
+
+		 #editorConsoleAddOn, #editorConsoleShowAddOn, #editorDivjComponentGameEngineHeadAddOn  { float: right; font-size:12px; display: inline;  }
+			#editorDivjComponentGameEngineHeadAddOn .editorButton {  background: #ffffff; color: black; }
+		
+		 .editorMoveAndDescription, .editorMoveAndDescription a, .editorMoveAndDescriptionSelected, .editorMoveAndDescriptionSelected a { font-size:14px; background: #cccccc; border: 1px solid black; opacity: 0.8; text-decoration: none; }
+		 .editorMoveAndDescriptionSelected { background: #cc7777; opacity: 0.9; }
+
+		  .editorImportExportHeadline { background: black; color: white; }
+		
+		 .editorDivInspectorHeadline { background: #ffffff; font-family: helvetica, sans serif; font-size: 16px; border-bottom: 1px solid black; border-top: 1px solid black; }
+		 .editorDivjComponentGameEngineHead, .editorDivjComponentGameEngineHead a{ font-size: 18px; color: white; background: black; border-bottom: 1px solid black; } 
+		 
+  	</style>
+  	<script src="jquery.js"></script>
+   
+     <!-- _script src="jcomponentgameengine-0.1.js" /> -->
+     
+     <script>
+        // GameEngine
+   var jComponentGameEngine = function( )
+   {
+   		// game engines
+   		this.name="jComponentGameEngine";
+   		this.version=0.75;
+   		this.jquery=true;
+   		
+   		// technical thread settings
+   		this.intervalGraphic=1000/30;
+   		this.intervalPosition=1000/30;
+   		this.intervalUpdate=1000/30;
+			this.intervalUpdateStop=false;
+   		
+   		// mode
+   		this.mode="editor"; // game
+   		this.modeSub=""; // play|pause   		
+   		
+   		// todo: subtodo - system?
+   		
+   		/*
+   			cases:
+   			- editor (without game)
+   			- game (with open editor)
+
+   		*/
+   		// ...
+   		this.setSystem = function(newMode,newModeSub)
+   		{
+   			this.mode=newMode;
+   			this.modeSub=newModeSub;
+   		}
+   		
+   		// loops
+   		/* // not yet used
+   		this.loopGame; // update
+   		this.loopGameGraphic; // searches for graphic loops - updateGraphics ...
+
+   		this.loopEditorGraphic; // renders editor loops - not active if editor is not active
+   		*/
+
+   		/*
+   			
+   			Project Management
+   			
+   		*/
+   		// project etc
+   		this.actualProject="ActualProject"; // actual scene ...
+   		this.actualScene="Scene1"; // actual scene ...
+   		// this.actualObject=null;
+   		this.sceneGraph=new GameObject();
+   		this.sceneGraph.name="root";
+   			
+   			// all gameobjects	
+   			this.gameobjectId=1; // todo: also export!!
+	   		this.arrayGameobjects=new Array();
+   		
+   		/*
+   		
+   			Game Management
+   		
+   		*/
+   		this.startGame = function()
+   		{
+   			this.console("","startGame()");
+   			
+   			this.setSystem("game","");
+   			
+   			
+   			// loadScene("intro");
+   			
+   			// startScene();
+   			this.startScene();
+   			
+   			// ...
+   			
+   			
+   		}
+   				// loadScene
+   				this.loadScene = function( sceneName )
+   				{
+   					// clean level
+   					
+   					// load from ...
+   					// loadSceneFromScriptObjects( sceneName );
+   					
+   					
+   				}
+   				
+   				// startScene
+   				this.startScene = function()
+   				{
+   					// set 
+   					this.intervalUpdateStop=false;
+   				
+   					// compile
+   				
+   					// start event
+   					this.doGameComponentEventStart();
+   					
+   					// start thread here ...
+   					this.loopGameComponentUpdateThread();
+   					
+   				}
+   				
+   				// stop scene
+   				this.stopScene = function()
+   				{
+   					// stop update on update thread
+					this.intervalUpdateStop=true;
+   				}
+   				
+		/*
+			GameEngine.Editor.Settings
+		*/
+   		// editor
+   		this.editor=false; // editor active
+   		this.editorJQueryAnimation=true;
+   		this.editorFirstStartUp=true;
+
+			// selected objects
+			this.editorActualType; // todo: solved by typeof? GameObject | Asset
+			this.editorActualTypeSub; // todo: solved by typeof?
+			this.editorActualObject;
+			this.editorActualObjectAddId=-1; // -1/other ids..
+		
+			// editor storage
+			this.editorStorage=null; 
+
+			// editor scene editor
+			this.editorSceneEditorActive=true;
+			
+   		// console
+   		this.arrConsole=new Array(); // add messages
+
+   		// registratedComponents
+   		this.arrRegistratedComponents=new Array(); 
+
+		/*
+   		
+   				Threads
+   		
+   		*/
+
+	    // Thread Component
+   		// Component Update Thread
+   		this.loopGameComponentUpdateThread= function()
+   		{
+   			// 
+   			// do the start events ...
+   			// update etc ...
+   			// 
+   		
+   			// alert("loopGameComponentUpdate");
+   			// this.console("system","ComponentLoop");
+   			this.loopGameComponentUpdateRecursivly(this.sceneGraph);
+   			
+   			// set time out here ..
+   			var thisGameEngineObj=this;
+   			
+   			if (!this.intervalUpdateStop)
+   			{
+   				setTimeout(function() { thisGameEngineObj.loopGameComponentUpdateThread(); }, this.intervalUpdate);
+   			}
+			else
+			{
+				this.intervalUpdateStop=false;
+			}
+   		}
+   		
+	   			// Component update scene
+	   			// this.editorSceneGraphDivRecTree
+   				this.loopGameComponentUpdateRecursivly=function( gameobjectStart )
+   				{			
+   				
+				 	// ok object with parent 
+				 	var gameObjTmp;
+				 	var count=0;
+				 	for (var o=0;o<this.arrayGameobjects.length;o++)
+				 	{
+				 		 gameObjTmp=this.arrayGameobjects[o];
+				 		 if (gameObjTmp.parent==gameobjectStart)
+				 		 {
+				 		 	// do the upate
+				 		 	gameObjTmp.update();
+				 		 		
+				 		 	// update Components
+				 		 	// do update here !!
+				 		 	
+								var compTmp;
+								var arrComp=gameObjTmp.getAllComponent();
+								for (var a=0;a<arrComp.length;a++)
+								{
+									compTmp=arrComp[a];
+									if (compTmp.active) compTmp.update();
+								}
+								
+							// go on here with the children ...
+							this.loopGameComponentUpdateRecursivly(gameObjTmp);
+				 		 }
+				 	}
+   				}   		
+   		
+   		// Thread Position
+   		// Position Update Thread
+   		this.loopGamePositionUpdateThread= function()
+   		{
+   			// go through all an search for specific things ..
+   			
+   			// alert("loopGamePositionUpdate");
+   			// this.console("system","PositionLoop");
+   			this.loopGamePositionUpdateDoRendererRecursivly(this.sceneGraph);
+   			
+   			// set time out here ..
+   			var thisGameEngineObj=this;
+   			setTimeout(function() { thisGameEngineObj.loopGamePositionUpdateThread(); }, this.intervalPosition);
+   		}
+   		
+	   			// Position update scene
+	   			// this.editorSceneGraphDivRecTree
+   				this.loopGamePositionUpdateDoRendererRecursivly=function( gameobjectStart )
+   				{			
+   				
+				 	// ok object with parent 
+				 	var gameObjTmp;
+				 	var count=0;
+				 	for (var o=0;o<this.arrayGameobjects.length;o++)
+				 	{
+				 		 gameObjTmp=this.arrayGameobjects[o];
+				 		 if (gameObjTmp.parent==gameobjectStart)
+				 		 {
+				 		 	// update positions
+				 		 	if (gameobjectStart!=this.sceneGraph)
+				 		 	{
+				 		 		// gameObjTmp
+				 		 		var localX=gameObjTmp.transform.localPosition.x;
+				 		 		var localY=gameObjTmp.transform.localPosition.y;
+				 		 		var localZ=gameObjTmp.transform.localPosition.z;
+ 
+								// update position				 		 		
+				 		 		gameObjTmp.transform.setPosition(gameobjectStart.transform.position.x+localX,gameobjectStart.transform.position.y+localY,gameobjectStart.transform.position.z+localZ);
+				 		 	}
+							
+							// go on here with the children ...
+							this.loopGamePositionUpdateDoRendererRecursivly(gameObjTmp);
+				 		 }
+				 	}
+   				}
+   		
+   		
+   		// Thread Graphic
+   		
+   		// graphic update
+   		this.loopGameGraphicUpdateThread= function()
+   		{
+   			// go through all an search for specific things ..
+   			
+   			// alert("loopGameGraphicUpdate");
+   			// this.console("system","graphicLoop");
+   			this.loopGameGraphicUpdateDoRendererRecursivly(this.sceneGraph);
+   			
+   			// set time out here ..
+   			var thisGameEngineObj=this;
+   			setTimeout(function() { thisGameEngineObj.loopGameGraphicUpdateThread(); }, this.intervalGraphic);
+   		}
+   		
+	   			// graphic update scene
+	   			// this.editorSceneGraphDivRecTree
+   				this.loopGameGraphicUpdateDoRendererRecursivly=function( gameobjectStart )
+   				{			
+   				
+				 	// ok object with parent 
+				 	var gameObjTmp;
+				 	var count=0;
+				 	for (var o=0;o<this.arrayGameobjects.length;o++)
+				 	{
+				 		 gameObjTmp=this.arrayGameobjects[o];
+				 		 if (gameObjTmp.parent==gameobjectStart)
+				 		 {
+				 		 	if (gameObjTmp.active)
+						 	{
+						 		// console("system","cameraFound "+gameObjTmp.name);
+
+						 	    // search for camera component!
+						 	    // do the renderings 
+						 	    var cameraCompontent=gameObjTmp.getFirstComponentByType("camera","renderer");
+								if (cameraCompontent!=null)
+								if (cameraCompontent.active)
+								{
+
+									// found render there!!!
+									// console("system","cameraFound"+gameObjTmp.name);
+								
+									
+									// ...
+							 	    // todo: takes the renderer the job to render to whatever?
+							 	    //       or to build the div? ??
+						 	    
+									// ok do the cameraCompontent here
+									//try
+									//{
+										cameraCompontent.updateGraphic( this.sceneGraph, this.arrayGameobjects );
+										
+										// todo - problem divs not unique!
+										// this.console("","loopGameGraphicUpdateDoRendererRecursivly("+gameObjTmp.name+")");
+									//}
+									//catch( e )
+									//{
+									//	this.error(cameraCompontent.gameObject.name+"."+cameraCompontent.name+".camera/renderer","error "+e);
+									//}
+								}
+						 	    
+						 	    
+						 	    
+				 		 	}
+							
+							// go on here with the children ...
+							this.loopGameGraphicUpdateDoRendererRecursivly(gameObjTmp);
+				 		 }
+				 	}
+   				}
+   		
+   		// /Threads
+   		
+   		/*
+			Events
+			
+			
+		*/
+		// CompileEvents - for Script 
+		
+		
+		// classic events - start & update		
+		/*
+		
+			Event: Start 
+		
+		*/
+		this.doGameComponentEventStart = function()
+		{
+			// 
+			this.doGameComponentEventStartRecursivly(this.sceneGraph);
+		}
+			
+				// this.doGameComponentEventStartRecursivly
+   				this.doGameComponentEventStartRecursivly=function( gameobjectStart )
+   				{			
+   				
+				 	// ok object with parent 
+				 	var gameObjTmp;
+				 	var count=0;
+				 	for (var o=0;o<this.arrayGameobjects.length;o++)
+				 	{
+				 		 gameObjTmp=this.arrayGameobjects[o];
+				 		 if (gameObjTmp.parent==gameobjectStart)
+				 		 {
+				 		 		// do the start!
+				 		 		gameObjTmp.start();
+				 		 		
+				 		 		// do start here !!
+								var compTmp;
+								var arrComp=gameObjTmp.getAllComponent();
+								for (var a=0;a<arrComp.length;a++)
+								{
+									compTmp=arrComp[a];
+									if (compTmp.active) compTmp.start();
+								}
+				 		 	
+							// go on here with the children ...
+							this.doGameComponentEventStartRecursivly(gameObjTmp);
+				 		 }
+				 	}
+   				}
+			
+		
+		// Mouse Events ...
+   		
+
+		/*   		
+   			
+   			GameEngine: EDITOR MANAGEMENT
+   		
+   		*/
+   		// editor
+   		// start up
+   		this.start = function()
+   		{
+   			// alert("start up");
+   			this.console("system","this.start() {");
+   			
+   			// add a debug window in 
+			if (this.jquery)
+			{
+				if (this.editor)
+				{
+					// start 
+					this.editorStorage=new Storage();
+   					this.editorStorage.start();
+   					
+					// check first start up
+					if (this.editorStorage.working)
+					{
+						this.editorFirstStartUp=this.editorStorage.checkFirstStartUp();
+						// first start up
+// todo: fix for firefox
+// alert("editorFirstStartUp"+this.editorFirstStartUp);						
+					}
+   					
+					// divs etc
+					$("body").append("<div class='editorDivContainer'  id='divGameEngineContainer'>"+this.getEditorHead()+"</div>");
+					
+					$("#divGameEngineContainer").append("<div id='divGameEngineEditor'>"+this.getEditor()+"</div>");	
+					$("#divGameEngineContainer").attr("style","border: 1px solid black; width: 400px; position: absolute; left: 500px; font-family: helvetica, sans serif; font-size: 12px; z-index:7000;");	
+
+							// content right
+							// $("#divGameEngineEditor").append("<div id='divGameEngineContainerRight' style='width: 250px; float: right; border-top: 1px solid black;'></div>");	
+								
+							// content left
+							$("#divGameEngineEditor").append("<div id='divGameEngineContainerLeft' style='width: 400px; height: 400px; overflow: auto; background: #cccccc; border-top: 1px solid black; border-right: 1px solid black; '></div>");	
+								// assets
+								$("#divGameEngineContainerLeft").append("<div id='divGameEngineAssets'><div  class='editorDivInspectorHeadline'><a href='javascript:editorLinkVoid()'; onClick=\"gameEngineObj.editorAssetsToggle()\" >Assets ></a></div><div id='divGameEngineAssetsObjects'>"+this.editorAssetDiv()+"</div></div>");	
+									$("#divGameEngineAssets").attr("style","border: 0px solid black;  ");	
+									$("#divGameEngineAssetsObjects").attr("style"," display: none; font-size: 12px; overflow: auto; height: 90px; ");
+								$("#divGameEngineContainerLeft").append("<div id='divGameEngineSceneEditor'><div  class='editorDivInspectorHeadline'><a href='javascript:editorLinkVoid()'; onClick=\"gameEngineObj.editorSceneEditorToggle()\" >Scene Editor ></a></div></div>");	
+									$("#divGameEngineAssets").attr("style","border: 0px solid black;  ");	
+								// scene graph
+								$("#divGameEngineContainerLeft").append("<div id='divGameEngineSceneGraph' ><div class='editorInspectorSceneGraphAddObject'><div class='editorButton'><a href='javascript:editorLinkVoid()'; onClick=\"gameEngineObj.editorSetInspectorAddObjectToSceneGraph()\">add object</a></div></div><div  class='editorDivInspectorHeadline'><a href='javascript:editorLinkVoid()'; onClick=\"$('#divGameEngineSceneGraphObjects').toggle();\">SceneGraph ></a></div><div id='divGameEngineSceneGraphObjects'></div><div id='divGameEngineSceneGraphObjectsAdd' style='border: 1px dotted black;'>"+this.editorSetInspectorAddObjectForm()+"</div><div id='divGameEngineSceneGraphObjectsMove' style='border: 1px dotted black;'>"+this.editorSetInspectorMoveObjectForm()+"</div></div>");	
+									$("#divGameEngineSceneGraph").attr("style","border: 1px solid black;");	
+										$("#divGameEngineSceneGraphObjects").attr("style","font-size: 12px; overflow: auto; height: 90px; ");				
+								// inspector
+								$("#divGameEngineContainerLeft").append("<div id='divGameEngineInspector'><div class='editorDivInspectorHeadline'><a href='javascript:editorLinkVoid()'; onClick=\"$('#divGameEngineInspectorObjects').toggle();\">Inspector ></a></div><div id='divGameEngineInspectorObjects'></div><div class='editorDivInspectorHeadline' style='border: 0px; border-top: 1px solid black; '><a href='javascript:editorLinkVoid()'; onClick=\"$('#divGameEngineConsole').toggle();\">Console ></a><div id='editorConsoleShowAddOn'></div></div></div>");	
+								$("#divGameEngineInspector").attr("style","border: 1px solid black; ");				
+									$("#divGameEngineInspectorObjects").attr("style","font-size: 12px; overflow: auto; height: 250px; ");				
+
+
+							// at the end again
+							// console
+							$("body").append("<div id='divGameEngineConsole'><div class='editorDivInspectorHeadline'>Console <div id='editorConsoleAddOn' ><div class='editorButton'><a href='javascript:editorLinkVoid()'; onClick=\"$('#divGameEngineConsole').hide();\">Hide</a></div><div class='editorButton'><a href='javascript:editorLinkVoid()'; onClick=\"gameEngineObj.consoleClear();\">Clear</a></div></div></div><div id='divGameEngineConsoleObjects'></div></div>");	
+								$("#divGameEngineConsole").attr("style","border: 1px solid black; position: absolute; border: 1px solid black; left: 0px; top: 500px; width: 500px; height: 150px; display: none;  z-index:7001; ");				
+									$("#divGameEngineConsoleObjects").attr("style","font-size: 10px; overflow: auto; height: 120px; ");				
+					
+					// not first time ... 
+					if (this.editorStorage.working)
+					{
+						if (!this.editorFirstStartUp)
+						{
+							// 1. get actual scene (update actualScene)
+							this.actualScene=this.editorSceneLoadStartScene();
+	
+							// 2. load assets
+							this.editorProjectLoadAssets(this.actualProject);
+							
+							// 3. load level
+							this.editorSceneLoadByName(this.actualScene);
+						}
+					}
+
+					// update it
+					this.editorDoTheUpdate();
+				}
+				
+				// divGameEngine
+				// editor?
+				// is there a gameengine for this
+				var arrGameEngineObject=$("#divGame");
+				if (false)
+				if (arrGameEngineObject.length==0)
+				{
+					// editor ..
+					
+					this.error("system","could not find a div with id 'divGame' create my own ");
+				
+					// add a gameframe
+					$("body").append("<div id='divGame'></div>");
+						$("#divGame").append("");
+						$("#divGame").attr("style","border: 1px solid black; width: 400px; height: 400px; font-family: helvetica, sans serif; overflow: hidden; position: relative; left: 0px; top: 0px; overflow: auto;"); 
+						
+				}
+				
+				
+			}
+			
+			
+			// game position	
+			// todo: implement in graphic update?
+			this.loopGamePositionUpdateThread();
+			
+			// game loop			
+			this.loopGameGraphicUpdateThread();
+
+			// debug
+			this.console("system","this.start() }");
+
+   		}
+   		
+   		/*
+   			GameEngine: Editor Load etc
+   		*/
+   		
+   		/*
+   			GameEngine.Editor.Projects / Assets
+   		*/
+   		
+   		this.editorProjectStoreAssets = function()
+   		{
+   			// store actual assets
+			var strAssetsScript=this.getScriptAssets();
+			this.editorStorage.setAssets(this.actualProject,strAssetsScript);
+   		}
+
+		// load editor projects   		
+   		this.editorProjectLoadAssets = function( projectName )
+   		{
+   			// clear?
+   			// todo
+   			this.clearAssets();
+   			
+   			var strAssets=this.editorStorage.getAssets( projectName );
+   				this.evalAssets(strAssets);
+   		}
+   		
+   		   		// eval assets
+				this.evalAssets = function(strAssets)
+				{
+					try { eval(strAssets); } catch (e) { this.error("","compiling assets in "+ strAssets); }
+				}
+
+   		
+   		/*
+   			GameEngine.Editor.ScreenPosition
+   			usage on: resize etc
+   		*/
+   		this.editorAdaptScreenPosition = function()
+   		{
+   			var windowWidth=$(window).width();
+   			var windowHeight=$(window).height();
+   			
+   			this.console("","editorAdaptScreenPosition("+windowWidth+","+windowHeight+")");
+   			
+   			// editor set position
+   			$("#divGameEngineContainer").css("left",(windowWidth-420));
+   			$("#divGameEngineContainer").css("top",0);
+   			
+	   			// dynamic
+	   			var heightPercentage=(windowHeight*70)/100;
+	   			$("#divGameEngineContainerLeft").css("height",heightPercentage);
+	   			
+   			// console set position
+   			$("#divGameEngineConsole").css("left",5);
+   			$("#divGameEngineConsole").css("width",(windowWidth-450));
+   			$("#divGameEngineConsole").css("top",(windowHeight-190));
+   			
+   			
+   			
+   		}
+   		
+   		/*
+   			GameEngine.Editor.Project.Scene
+   		*/
+   		
+   		// clear scene
+   		this.editorSceneClear = function( )
+   		{
+   			this.arrayGameobjects=new Array();
+   		}
+   		
+			// editor 
+			this.editorStoreAssetsAndActualScene = function()
+			{
+				// store assets
+				this.editorProjectStoreAssets();
+	
+				// store objects
+				var scriptScene=this.getScriptScene();
+				this.editorStorage.storeScene( this.actualProject, this.actualScene, scriptScene );
+				
+				this.console("","stored assets and actual scene");
+			
+	  		    // update   		   
+	   			this.editorDoTheUpdate();
+
+			}
+	
+   		
+   		// save actual scene here
+   		this.editorSceneSave = function(  )
+   		{
+   			// store before going on ...
+   			this.editorStoreAssetsAndActualScene();
+   	
+   			// done
+   			this.console("","stored actual scene");
+
+			// update   		   
+   			this.editorDoTheUpdate();
+
+   		}
+   		
+   		// save as ...
+   		this.editorSceneSaveAs = function(  )
+   		{
+   			// store before going on ...
+   			// this.editorStoreAssetsAndActualScene();
+			// store assets
+			this.editorProjectStoreAssets();
+   			
+   			// new name
+   			var strNewname = prompt("Save scene as ...");
+   			if (strNewname!="")
+   			{
+				// scene stora as
+				this.editorSceneStoreAs(strNewname);
+
+				// actual scene				
+				this.actualScene=strNewname;
+				
+				// update   		   
+				this.editorDoTheUpdate();
+	
+				// done
+				this.console("","stored as "+strNewname+" actual scene");
+			}
+   		}
+
+			// editorSceneStoreAs
+			this.editorSceneStoreAs = function( strNewname )
+   			{
+	   			var scriptScene = this.getScriptScene();
+	   			this.editorStorage.storeScene( this.actualProject, strNewname, scriptScene );
+   			
+   				// update   		   
+	   			this.editorDoTheUpdate();
+   			}
+			
+		// editorSceneLoad
+   		this.editorSceneLoad = function( sceneName )
+   		{
+   			// store before going on ...
+   			// this.editorStoreAssetsAndActualScene();
+   			// store assets
+			this.editorProjectStoreAssets();
+
+			// load it
+			this.editorSceneLoadByName(sceneName);
+    			
+   			// actual scene
+   			this.actualScene=sceneName;
+   			
+   			// update editor !
+   			this.editorDoTheUpdate();
+   		}
+   		
+   			//  loadLevel
+   			this.editorSceneLoadByName = function ( sceneName )
+   			{
+   				   	// clear assets
+					// todo: this.editorSceneClear();
+		  
+					// clear scene
+					this.editorSceneClear();
+				
+					// load assets here ...
+					this.editorProjectLoadAssets(this.actualProject);
+		  
+					// load scene
+					// todo: own thread
+					var textScript=this.editorStorage.loadScene(""+this.actualProject,""+sceneName);
+					// alert("load scene "+sceneName+"---"+textScript);
+					this.evalScene(textScript);
+					
+					// inspector
+					this.editorActualObject=null;
+   			}
+
+				// eval scene
+				this.evalScene = function(strScene)
+				{
+					try { eval(strScene); } catch (e) { this.error("","compiling objects in "+ strScene); }
+				}
+
+		// editorSceneSetStartScene
+		this.editorSceneSetStartScene = function( strName )
+   		{
+   			this.editorStorage.setStartScene(this.actualProject, strName);
+
+			// update   		   
+			this.editorDoTheUpdate();
+	
+			// done
+			this.console("","new startscene set for editor and game "+strName+"");
+   			
+   		}
+   		
+   		// get start scene 
+   		this.editorSceneLoadStartScene = function()
+   		{
+   			var startScene=this.editorStorage.getStartScene(this.actualProject);
+   			if (startScene==null) return this.actualScene;
+   			return startScene;
+   		}
+   		
+   		// editorSceneRemove
+   		this.editorSceneRemove = function( strName )
+   		{
+   			var strNameRemove=strName;
+   			
+   			alert(""+strNameRemove);
+   			
+			// this.editorSceneStoreAs(strNameRemove);
+			this.editorStorage.removeScene(this.actualProject, strNameRemove);
+			
+			// update   		   
+			this.editorDoTheUpdate();
+	
+			// done
+			this.console("","removed scene "+strNameRemove+"");
+   		}
+   		
+   		/*
+   			GameEngine.Editor.Start/StopGame
+   		*/
+
+		// start game   		
+   		this.editorStartGame = function()
+   		{
+   			
+   			this.console("","editorStartGame()");
+
+			// store assets   			
+   			this.editorProjectStoreAssets();
+   			
+   			// save the actual scene
+   			var tempScript=this.getScriptScene();
+   			this.editorStoreSceneTemp(tempScript);
+
+			// start thread   
+			this.startScene();
+   		}
+
+			// store ...
+			this.editorStoreSceneTemp = function( strSceneTemp )
+			{
+				this.editorStorage.storeSceneTemp( this.actualProject, strSceneTemp );
+			}
+			
+		// store and load game
+   		this.editorStopGame = function()
+   		{
+   			this.console("","editorStopGame()");
+   			
+   			// stop thread                                     
+   			this.stopScene();
+   			
+   			// clear 
+   			this.editorSceneClear();
+   			
+   			// retrieve actual scene
+			var sceneScript=this.editorLoadSceneTemp();
+				this.evalScene(sceneScript);
+			
+			// update it
+			this.editorDoTheUpdate();
+   		}
+   		
+			// load ...
+			this.editorLoadSceneTemp = function()
+			{
+				return this.editorStorage.loadSceneTemp( this.actualProject );
+			}
+   		
+   		/*
+   			GameEngine: CONSOLE
+   		*/
+   		this.console = function(area,msg)
+   		{
+	   		// alert("console2("+area+","+msg+")");
+   			this.consoleExtended(area,"message",msg);
+   		}
+   		
+   		this.warning = function(area,msg)
+   		{
+   			this.consoleExtended(area,"warning",msg);
+   		}
+   		
+   		this.error = function(area,msg)
+   		{
+   			this.consoleExtended(area,"error",msg);
+   		}
+   		
+			// extended
+			this.consoleExtended = function(area, level,msg)
+			{
+				// alert("console3("+area+","+level+","+msg+")");
+	
+				var newMsg=new ConsoleMessage(area,level,msg);
+				
+				// disable editor!
+				// todo: into database?
+				this.arrConsole[this.arrConsole.length]=newMsg;
+				
+				// update console
+				this.editorConsoleDoTheUpdate();
+			}	
+			
+			// clear it!
+			this.consoleClear = function()
+			{
+				this.arrConsole=new Array();
+				
+				this.editorConsoleDoTheUpdate();
+			}
+			
+   		/*
+   			GameEngine: EDITOR
+   		*/
+   			// editor
+   			this.getEditorHead = function()
+   			{
+   				var html="<div class='editorDivjComponentGameEngineHead' ><a href='javascript:editorLinkVoid()'; onClick=\"$('#divGameEngineEditor').toggle();\">jComponentGameEngine "+this.version+" ></a><div style='float:right; padding-left: 5px; padding-right: 5px; background: #888888'><a href='javascript: editorLinkVoid()' onClick='gameEngineObj.editorSceneSave();document.location.reload();' style='background: none; color: black; '>store & reload</a></div></div></div>";	
+   				return html;
+   			}
+   			
+   			this.getEditor = function()
+   			{
+   				var html="<form name='editorprojectmanagement'>";
+
+ 				html=html+"<a href='http://jcomponentgameengine.destruct.ch' target='_blank'>Javascript-Component-GameEngine with localStorage-Editing. >></a>";
+   				
+   				// html - attention?
+   				if (!this.editorStorage.working)
+   				{
+   					html=html+"<div class='editorAttentionNoStoragePossiblity'>ATTENTION: This is application stores the data to your localBrowser-Storage. But your Browser doesn't seem to be able to store this. So change Browser or Update-Browser or use manually the export function!</div>";
+   				}
+  
+					// load and save
+					// store in cookies or sqlite?
+
+					// clear everything
+					html=html+"<div style='float:right'><input type=button value='reboot' onClick=\"if (confirm('Are you sure, that you want to delete all assets & scenes of your project?')) { localStorage.clear(); document.location.reload(); } \"></div>";
+						   			
+	   				// store?
+	   				if (this.editorStorage.working)
+		   			{
+		   				html=html+"<div class='editorDivProjectManagementContainer'>";
+			   				html=html+"Project: [New > Copy Webseite] ";
+				   			// get all 
+				   				html=html+"<div id='editorDivProjectScenes'>";
+			   					html=html+this.editorScenesDiv()+"";
+							html=html+"</div>";
+						html=html+"</div>";
+					}
+					
+					html=html+"<div class='editorDivMode'>";	   				
+					html=html+"<div id='editorPlayButton'><a href='javascript:editorLinkVoid()'; onClick=\"gameEngineObj.editorStartGame();$('#editorPlayButton').hide();$('#editorPlayRunningButton').css('display','inline');\">Play Scene ></a></div> <div id='editorPlayRunningButton'><a href='javascript:editorLinkVoid()'; onClick=\"gameEngineObj.editorStopGame();$('#editorPlayButton').show();$('#editorPlayRunningButton').hide();\">Stop running ||</a> Game running: no savings!</div>";
+					html=html+"";
+					html=html+"</div>";
+	   				html=html+"</form>  ";
+
+				// export
+				// html
+
+   				return html;
+   			}
+   			
+   				// editor scene divs				   			
+	   			this.editorScenesDiv=function()
+	   			{ 
+	   				// actual ..
+	   				var arrScenes=this.editorStorage.getAllScenes(this.actualProject);
+	   				var strSelection="<select name='scenename'>";
+	   				for (var a=0;a<arrScenes.length;a++)
+	   				{
+	   					var strChecked="";
+	   						if (arrScenes[a]==this.actualScene) strChecked=" selected "; 
+	   					var startSceneFlag="";
+	   						if (this.editorSceneLoadStartScene()==arrScenes[a]) startSceneFlag="*";
+	   					strSelection=strSelection+"<option value='"+arrScenes[a]+"' "+strChecked+">"+arrScenes[a]+""+startSceneFlag+"</option>";
+		   			}
+		   			strSelection=strSelection+"</select>";
+	   				
+	   				var html="";
+	   					html=html+"<strong>Actual-Scene: "+this.actualScene+"</strong> <input type='button' onClick='gameEngineObj.editorSceneSave()' value='save'> <input type='button' onClick='gameEngineObj.editorSceneSaveAs()' value='save as'>  ";
+
+	   					html=html+"<div id='editorDivProjectManagement' >Scenes: "+strSelection+" <input type='button' onClick=\"var selectedSceneName=document.forms['editorprojectmanagement'].scenename.value; gameEngineObj.editorSceneLoad(selectedSceneName);\" value='load'>  <input type='button'  onClick=\"var selectedSceneName=document.forms['editorprojectmanagement'].scenename.value; gameEngineObj.editorSceneSetStartScene(selectedSceneName);\" value='set start*' > <input type='button'  onClick=\"var selectedSceneName=document.forms['editorprojectmanagement'].scenename.value; if (confirm('You really want to remove Scene '+selectedSceneName+' ')) { gameEngineObj.editorSceneRemove(selectedSceneName); } \" value='remove'></div>";
+
+	   					// html=html+"<div id='editorProjectExportPossibilites' style='border: 1px solid black; float: right;'>";
+	   					html=html+"Import > <a href='javascript:editorLinkVoid()'; onClick=\"gameEngineObj.exportToSceneActual();\">[Export Scene]</a>";
+	   					// html=html+"Export > <a href='javascript:editorLinkVoid()'; onClick=\"gameEngineObj.exportToSceneActual();\">[Export Scene]</a>";
+						// html=html+"</div>";
+
+					return html;
+				}
+   				
+   			// scenegraph
+   			this.arrGameObjectsFree; // * not used
+   			this.arrGameObjectsDeleted; // * not used
+   			this.editorSceneGraphDiv=function()
+   			{
+   				var html="";
+
+   				// the free gameobjects collect them!
+   				this.arrGameObjectsFree=new Array();
+   				this.arrGameObjectsDeleted=new Array();
+   				
+   				// go recursivly through the tree
+   				// start with root objects here ..
+				html=html+this.editorSceneGraphDivRecTree(this.sceneGraph);
+				
+				// add index
+				// html=html+this.editorSceneGraphDivIndex();
+				
+				// todo: add not attached objects
+   				
+   				return html;
+   			}
+   			
+   				// index here
+   				this.editorSceneGraphDivIndex=function( gameobjectStart )
+   				{
+   					var htmlResult="<hr>Index:<br>";
+   					
+   					var gameObjTmp;
+				 	for (var o=0;o<this.arrayGameobjects.length;o++)
+				 	{
+				 		 gameObjTmp=this.arrayGameobjects[o];
+				 		 var parentName="";
+				 		 if (gameObjTmp.parent!=null) parentName=gameObjTmp.parent.name;
+				 		 htmlResult=htmlResult+""+o+"-"+gameObjTmp.name+" "+gameObjTmp.parent+".name: "+parentName+"<br>";
+					}
+					return htmlResult;
+   				}
+   			
+   				// this.editorSceneGraphDivRecTree
+   				this.editorSceneGraphDivRecTree=function( gameobjectStart )
+   				{
+				 	// are there some gameobjects attached to this gameobject?
+				 	var htmlResult="";
+				 	
+				 	// ok object with parent 
+				 	var gameObjTmp;
+				 	var count=0;
+				 	for (var o=0;o<this.arrayGameobjects.length;o++)
+				 	{
+				 		 gameObjTmp=this.arrayGameobjects[o];
+				 		 if (gameObjTmp.parent==gameobjectStart)
+				 		 {
+				 		 	// this.error("debug","found one!");
+				 		 	htmlResult=htmlResult+"<li >"; 
+				 		 		
+				 		 		// active or not
+				 		 		var  strColor="black"; 
+				 		 			 if (!gameObjTmp.active) { strColor="gray"; }
+
+									// actual object					
+									var strSelected="";
+									if (this.editorActualObject==gameObjTmp) { strSelected="Selected"; htmlResult=htmlResult+"<strong>"; }
+								
+				 		 		if (gameObjTmp.editorAccessDelete) { htmlResult=htmlResult+"<div class='editorSceneButtonSmall'><a  href='javascript:editorLinkVoid()';  style='text-decoration: none; color: "+strColor+";' onClick=\"if (confirm('Are you sure?')) { gameEngineObj.editorDeleteGameObjectById("+gameObjTmp.id+"); } \">x</a></div>"; }
+								else { htmlResult=htmlResult+"<div class='editorSceneButtonSmall'><strike>x</strike></div>"; }
+				 		 		htmlResult=htmlResult+"<div class='editorSceneButtonSmall"+strSelected+"'><a href='javascript:editorLinkVoid()'; style='text-decoration: none; color:  "+strColor+";' onClick=\"gameEngineObj.editorSetInspectorGameObjectById("+gameObjTmp.id+");gameEngineObj.editorScrollToSceneEditorGameObjectById("+gameObjTmp.id+");\"> "+gameObjTmp.name+" [mod]</a></div> <div class='editorButtonSmall'><a href='javascript:editorLinkVoid()'; onClick=\"gameEngineObj.editorCreateAssetFromGameObjectById("+gameObjTmp.id+");\">>[asset]</a></div>";
+				 		 		// htmlResult=htmlResult+"["+gameObjTmp.id+"]";
+
+									// /actual object								
+									if (this.editorActualObject==gameObjTmp) {  htmlResult=htmlResult+"</strong>"; }
+
+				 		 		// more attached here?
+					 		 	htmlResult=htmlResult+""+this.editorSceneGraphDivRecTree(gameObjTmp);
+				 		 	htmlResult=htmlResult+"</li>";
+				 		 	
+				 		 	++count;
+				 		 }
+				 	}
+				 	
+				 	htmlResult="<ul >"+htmlResult+"</ul>";
+				 	
+				 	return htmlResult;
+   				}
+   				
+   				// 
+   				
+   			/*
+   			
+   			GameEngine: Editor Inspector
+   			
+   			*/
+   			this.editorInspectorDiv=function()
+   			{
+   				var htmlResult="";
+   				
+   				// detail gameobject 
+   				if (this.editorActualType=="GameObject")
+   				{
+   					// is there an object to show?
+   					if (this.editorActualObject!=null)
+					{
+						// 
+						htmlResult=htmlResult+"<form name='inspectorform'>";
+						htmlResult=htmlResult+"<input type=button value='update' onClick=\"gameEngineObj.editorUpdateInspectorToGameObject()\" style='float: right;'>";
+						var strChecked=""; if (this.editorActualObject.active) strChecked="checked";
+						htmlResult=htmlResult+"Active: <input type=checkbox name='active' "+strChecked+" >  &nbsp;  &nbsp;  &nbsp;  Id: "+this.editorActualObject.id+" ";
+						htmlResult=htmlResult+"<br>Name: <input type='text' name='name' value='"+this.editorActualObject.name+"'>";
+						// todo: version 2.0
+						// htmlResult=htmlResult+"<br>Class: <input type='text' name='class' value='"+this.editorActualObject.class+"'>*";
+						htmlResult=htmlResult+"<br>Transform";
+							// var strRelativeChecked=""; if (this.editorActualObject.transform.relativeToCamera) strRelativeChecked="checked";
+							// htmlResult=htmlResult+"<br><input type=checkbox name='transformRelativeToCamera' "+strRelativeChecked+" > Relative to Camera (GUI)";
+	
+							// local position
+							var strDiv=""; if (this.editorActualObject.parent==this.sceneGraph) strDiv=" style='color: gray' ";
+							htmlResult=htmlResult+"<span "+strDiv+">";
+							htmlResult=htmlResult+"<br>Local Position: (";
+							htmlResult=htmlResult+"<input type='text' size=2 name='transform_localposition_x' value='"+this.editorActualObject.transform.localPosition.x+"'>";
+							htmlResult=htmlResult+",";
+							htmlResult=htmlResult+"<input type='text' size=2 name='transform_localposition_y' value='"+this.editorActualObject.transform.localPosition.y+"'>";
+							htmlResult=htmlResult+",";
+							htmlResult=htmlResult+"<input type='text' size=2 name='transform_localposition_z' value='"+this.editorActualObject.transform.localPosition.z+"'>";
+							htmlResult=htmlResult+")";
+							if (this.editorActualObject.parent==this.sceneGraph) { htmlResult=htmlResult+" * only absolute position"; }
+							htmlResult=htmlResult+"</span>";
+	
+							// absolute position
+							var strDiv=""; if (this.editorActualObject.parent!=this.sceneGraph) strDiv=" style='color: gray' ";
+							htmlResult=htmlResult+"<span "+strDiv+">";
+							htmlResult=htmlResult+"<br>Absolute Position: (";
+							htmlResult=htmlResult+"<input type='text' size=2 name='transform_position_x' value='"+this.editorActualObject.transform.position.x+"'>";
+							htmlResult=htmlResult+",";
+							htmlResult=htmlResult+"<input type='text' size=2 name='transform_position_y' value='"+this.editorActualObject.transform.position.y+"'>";
+							htmlResult=htmlResult+",";
+							htmlResult=htmlResult+"<input type='text' size=2 name='transform_position_z' value='"+this.editorActualObject.transform.position.z+"'>";
+							htmlResult=htmlResult+")";
+							if (this.editorActualObject.parent!=this.sceneGraph) { htmlResult=htmlResult+" * calculated on parent"; }
+							htmlResult=htmlResult+"</span>";
+							
+							htmlResult=htmlResult+"<br>Size: (";
+							htmlResult=htmlResult+"<input type='text' size=2 name='transform_scale_x' value='"+this.editorActualObject.transform.scale.x+"'>";
+							htmlResult=htmlResult+",";
+							htmlResult=htmlResult+"<input type='text' size=2 name='transform_scale_y' value='"+this.editorActualObject.transform.scale.y+"'>";
+							htmlResult=htmlResult+")";
+							
+							// show the components
+							var arrComp=this.editorActualObject.arrComponents;
+							var compObj;
+							for (var p=0;p<arrComp.length;p++)
+							{
+								compObj=arrComp[p];
+								var strChecked=""; if (compObj.active) strChecked="checked";
+									var strDeleteComponent="<input type=button value='delete' onClick=\"gameEngineObj.editorActualGameObjectDeleteComponent("+p+");\">";   						
+								htmlResult=htmlResult+"<hr>";
+								htmlResult=htmlResult+"<input type=button value='update' onClick=\"gameEngineObj.editorUpdateInspectorToGameObject()\" style='float: right;'>";
+								htmlResult=htmlResult+"<input type=checkbox name='componentActive"+p+"' "+strChecked+" > "+compObj.name+" ("+compObj.type+"/"+compObj.typeSub+")  "+strDeleteComponent+" ";
+								htmlResult=htmlResult+"<br>"+compObj.editorHtml();
+								htmlResult=htmlResult+"<br><br>";
+							}
+							
+							// add component
+							htmlResult=htmlResult+"<hr><hr>Component: <select name='componentadd'> ";
+							var regComp;
+							for (var z=0;z<this.arrRegistratedComponents.length;z++)
+							{
+								regComp=this.arrRegistratedComponents[z];
+								htmlResult=htmlResult+"<option>"+regComp.name+"  ("+regComp.type+"/"+regComp.typeSub+")</option>";
+							}
+							htmlResult=htmlResult+"</select>"; 
+							htmlResult=htmlResult+"<input type=button value='add' onClick=\"gameEngineObj.editorActualGameObjectAddComponent();\">";   						
+							
+						htmlResult=htmlResult+"</form>";
+					} 
+   				}
+   				
+   				// detail 
+   				
+   				return htmlResult;
+			}
+			
+			
+   			/*
+   			
+   			GameEngine: Editor Inspector
+   			
+   			*/
+   			this.editorAssetDiv=function()
+   			{
+   				var htmlResult="";
+
+   				htmlResult=htmlResult+"<ul>";
+   				var assetObj;
+   				for (var t=0;t<this.arrAssets.length;t++)
+   				{
+	   				assetObj=this.arrAssets[t];
+	   				htmlResult=htmlResult+"<li>";
+		   				htmlResult=htmlResult+"<a href='javascript:editorLinkVoid()'; style=''  onClick=\"gameEngineObj.editorSetInspectorAssetById("+assetObj.id+");\">"+assetObj.name+" ("+assetObj.type+"/"+assetObj.typeSub+")</a>";		   				
+						// different types ..
+						if (assetObj.type=="GameObject") 
+						{
+							var assetEntityGameObject=assetObj.entity;
+		   					htmlResult=htmlResult+"<ul><li><a href='javascript:editorLinkVoid()'; style=''  onClick=\"gameEngineObj.editorSetInspectorAssetByIdGameObject("+assetObj.id+");\">> "+assetEntityGameObject.name+" (GameObject))</a><li></ul>";		   				
+		   				}
+	   				htmlResult=htmlResult+"</li>";
+   					
+   					// attached asset objects here ...
+   					
+   				
+   				}
+	   			htmlResult=htmlResult+"</ul>";
+   				
+   				return htmlResult;
+			}	
+   				
+   				
+   			/*
+   				Editor: console
+   			*/
+   			this.editorConsoleDiv=function()
+   			{
+   				var html="";
+   				
+   				// show the last 15 messages here  
+   				breakAmount=15;
+   				breakAmount=-1;
+   				html=html+"<ul  style='list-style-type:none; padding: 0px;'>";
+   					var count=0;
+   					for (var t=this.arrConsole.length-1;t>=0;t--)
+   					{
+   						msg=this.arrConsole[t];
+   						// alert(msg);
+   						var col="#000000";
+   						if (msg.level=="warning")  { col="#ffff00"; }
+   						if (msg.level=="error")  { col="#ff0000"; }
+   						html=html+"<li style='border: 1px dotted #cccccc; color: "+col+";'><!-- ("+msg.date.seconds+")-->"+msg.area+"["+msg.level+"]:"+msg.message+"</li>";
+   						count++;
+   						if (breakAmount!=-1)
+   						if (count>breakAmount) 
+   						{
+   							html=html+"<li style='border: 1px dotted #cccccc; color:#000000;'>... ["+(this.arrConsole.length-breakAmount)+"] etc</li>";
+							break;
+   						}
+   					}
+   				html=html+"</ul>";
+   				
+   				
+   				return html;
+   			}
+   			
+   			/*
+   				exportSceneActual
+   				
+   			*/
+   			// to editor
+   			this.exportToSceneActual = function()
+   			{
+   				this.exportImportTo( "export", "actualscene" );
+   			}
+   			
+					// export
+					this.exportImportTo = function( mode, submode ) // export / special
+					{
+							// desc
+							var descMode="";
+							var descModeSub="";
+							
+							var textScript="";
+							
+							// do it
+							if (mode=="export") 
+							{ 
+								descMode="Export"; 
+								if (submode=="actualscene")
+								{
+									descModeSub="Actual scene";
+									var textScript=this.getScript();
+								}
+							
+							}
+							if (mode=="import") 
+							{ 
+								descMode="Import"; 
+								
+							}
+							
+							
+							// game export   				
+							var arrGameEngineObject=$("#divGameExport");
+							if (arrGameEngineObject.length==0)
+							{
+								// editor ..
+								// this.error("system","could not find a div with id 'divGame' create my own ");
+							
+								// add a gameframe
+								// todo: is jquery installed
+								// add a gameframe
+								$("body").append("<div id='divGameExport'></div>");
+									$("#divGameExport").append("");
+									$("#divGameExport").attr("style","border: 1px solid black; left: 50px; top: 50px; width: 400px; height: 400px; font-family: helvetica, sans serif; overflow: hidden; position: absolute;  overflow: auto; z-index: 8000;"); 
+							}	
+							
+							// show
+							$("#divGameExport").show();
+							
+							// add textscript
+							// width/height
+							var width=$(window).width()-50;
+							var height=$(window).height()-50;
+							$("#divGameExport").css("left",25);
+							$("#divGameExport").css("top",25);
+							$("#divGameExport").css("width",width);
+							$("#divGameExport").css("height",height);
+							$("#divGameExport").css("background","#aa9999");
+							
+							// the div
+							var strForm="<form>"
+								strForm=strForm+"<div class='editorImportExportHeadline'><a href='javascript:editorLinkVoid()' style='color: white; text-decoration: none;' onClick=\"$('#divGameExport').hide()\">EXPORT&Import ></a></div>";
+								strForm=strForm+"<div style=''><div class='editorButton'><a href='javascript:editorLinkVoid()'; onClick=\"$('#divGameExport').hide()\">close</a></div></div> ";
+								strForm=strForm+""+descMode+": "+descModeSub+"";
+								
+								strForm=strForm+"<br>Copy&Paste this here: <textarea cols=50 rows=30 style='width:"+(width-50)+"px; height:"+(height-50)+"px;'>"+textScript+"</textarea></div></form>";
+							$("#divGameExport").html(strForm);
+							
+			
+					}
+   			
+   			// getScript
+   			// get the whole script of this level
+   			// project / level ?
+   			this.getScript = function()
+   			{
+				
+				var textScript="";
+				
+					// head
+					textScript=textScript+this.getScriptHead();
+					
+					// add the gameengine
+   					textScript=textScript+"\n  ";
+   					textScript=textScript+"\n  var gameEngineObj = new jComponentGameEngine(); ";
+   					textScript=textScript+"\n ";
+
+					// add the assets
+					textScript=textScript+this.getScriptAssets();
+
+						// todo: add the scene or all scenes?
+						// LoadScene( sceneName ) { if (sceneName=='') { } etc.   }
+
+   					
+						// get recursivly all game objects
+				
+						// do it recursivly 
+						textScript=textScript+this.getScriptScene();
+						
+				return textScript;
+   			}
+   				
+   				// getScriptHead
+   				this.getScriptHead = function()
+   				{
+   				  var textScript="";
+   				  
+   					textScript=textScript+"\n/*";
+   					textScript=textScript+"\n  -------------------------------- ";
+   					textScript=textScript+"\n    JComponentGameEngine ";
+   					textScript=textScript+"\n  -------------------------------- ";
+   					textScript=textScript+"\n  URL: http://jcomponentgameengine.destruct.ch";
+   					textScript=textScript+"\n  ";
+   					textScript=textScript+"\n  Version: "+this.version+"";
+   					textScript=textScript+"\n  Date: "+(new Date());
+   					textScript=textScript+"\n";
+   					textScript=textScript+"\n*/";
+					
+				  return textScript;
+   				}
+   				
+   				// getScriptAssets
+   				this.getScriptAssets = function()
+   				{
+					var textScript="";   					
+				
+					textScript=textScript+"\n ";
+   					textScript=textScript+"\n  /* --------- Assets -------------- */";
+					textScript=textScript+"\n ";
+					
+					// get the assets ...
+					var assetObj;
+					for (var t=0; t<this.arrAssets.length;t++)
+					{
+						assetObj=this.arrAssets[t];
+						textScript=textScript+"\n    "+assetObj.getScript();
+					}
+   					
+					return textScript;
+   				}
+   				
+   				
+   				// get scene as script here ..
+   				this.getScriptScene=function(  )
+   				{
+					var textScript="\n";
+					 textScript=textScript+"\n  /* --------- Scene -------------- */";
+					 textScript=textScript+"\n  ";
+						textScript=textScript+this.getScriptSceneGraph(this.sceneGraph);
+   					textScript=textScript+"\n";
+   					
+   					return textScript;
+   				}
+				
+   				
+   				
+						// getScriptSceneGraph Recursive
+						this.getScriptSceneGraph=function( gameobjectStart )
+						{
+							// are there some gameobjects attached to this gameobject?
+							var textScript="";
+							
+							// ok object with parent 
+							var gameObjTmp;
+							for (var o=0;o<this.arrayGameobjects.length;o++)
+							{
+								 gameObjTmp=this.arrayGameobjects[o];
+								 if (gameObjTmp.parent==gameobjectStart)
+								 {
+										var gameobjectNameExport="gameObj_"+gameObjTmp.nameScript()+"_"+gameObjTmp.id;
+										
+										textScript=textScript+"\n\n /* "+gameObjTmp.name+" ("+gameObjTmp.id+")  */ \n";
+										
+										textScript=textScript+""+gameObjTmp.getScript();
+										textScript=textScript+""+this.getScriptSceneGraph(gameObjTmp);
+										
+										// parent??
+		
+											// root
+											if (gameObjTmp.parent==this.sceneGraph)
+											{
+												textScript=textScript+"\ngameEngineObj.attachToRoot("+gameobjectNameExport+");";
+											}
+											// other parent
+											if (gameObjTmp.parent!=gameEngineObj.sceneGraph)
+											{
+												textScript=textScript+"\ngameEngineObj.attachToParent("+gameobjectNameExport+",gameObj_"+gameObjTmp.parent.nameScript()+"_"+gameObjTmp.parent.id+");";
+											}					
+											
+										textScript=textScript+"\n ";
+										
+										
+								 }
+							}
+							
+							return textScript;
+						}
+   				
+   				
+   			/*
+   			
+   				gamescene.editor.inspector
+   			
+   			*/
+   			this.editorDeleteGameObjectById=function(gameobjId)
+   			{
+   				// delete this here
+   				// getobject
+   				var gameObj=this.getGameObjectById(gameobjId);
+   				if (gameObj)
+   				{
+   					// delete it!
+   					this.deleteGameObject( gameObj );
+   					this.console("","delete the gameobject "+gameObj.name);
+
+   					// udate it ..
+   					this.editorSceneGraphDoTheUpdate();  
+   					
+   					this.editorDoTheUpdate();
+
+   				}
+   			}
+   			
+   			// editorSetInspectorGameObjectById
+   			this.editorSetInspectorGameObjectById=function(gameobjId)
+   			{
+   				var obj=this.getGameObjectById(gameobjId);
+   				if (obj!=null)
+   				{
+   					// make it actual
+   					//
+   					this.editorActualType="GameObject"; 
+ 			  		this.editorActualObject=obj;
+ 
+   					// udate it ..
+   				   	this.editorInspectorDoTheUpdate();  
+
+					// set add and move object
+					this.editorSetInspectorAddObject(gameobjId);
+					this.editorSetInspectorMoveObject(gameobjId);
+
+   					this.editorDoTheUpdate();
+   				}
+   			}
+
+   			// editorSetInspectorAddObject
+   			this.editorSetInspectorAddObjectToSceneGraph=function()
+   			{
+				this.editorSetInspectorAddObject(-1);
+				this.editorDoTheUpdate();
+			}
+   			
+   			// editorSetInspectorAddObject
+   			this.editorSetInspectorAddObject=function(gameobjId)
+   			{
+   				this.editorActualObjectAddId=gameobjId;
+   				$('#divGameEngineSceneGraphObjectsAdd').html(""+this.editorSetInspectorAddObjectForm());
+   			}
+   				
+   				// editorSetInspectorAddObjectForm
+   				this.editorSetInspectorAddObjectForm = function()
+   				{
+   					var strName="SceneGraph";
+   						
+   						if (this.editorActualObjectAddId!=-1)
+   						{
+   							var gameObj=this.getGameObjectById(this.editorActualObjectAddId);
+   							if (gameObj!=null)
+   							{
+   								strName=gameObj.name+""; //  ["+gameObj.id+"]";
+   							}
+   						}
+   						
+   						var strSelection="<select name='addType'>";
+   						var arrTypes=this.getAssetsByType("GameObject");
+   							for (var a=0;a<arrTypes.length;a++)
+   							{
+   								strSelection=strSelection+"<option>"+arrTypes[a].name+"</option>";
+   							}
+   							strSelection=strSelection+"</select>";
+   						
+   					return "<form name='inspectorformadd'>Add  to <strong>"+strName+"</strong>: "+strSelection+" <input type='button' value='add' onClick=\"gameEngineObj.editorUpdateInspectorAddGameObject()\"></form>";
+   				}
+   				
+   			this.editorSetInspectorMoveObject=function(gameobjId)
+   			{
+   				this.editorActualObjectAddId=gameobjId;
+   				$('#divGameEngineSceneGraphObjectsMove').html(""+this.editorSetInspectorMoveObjectForm());
+   			}
+   			
+   				// editorSetInspectorMoveObjectForm
+   				this.editorSetInspectorMoveObjectForm = function()
+   				{
+   					var strName="SceneGraph";
+   						
+   						if (this.editorActualObjectAddId!=-1)
+   						{
+   							var gameObj=this.getGameObjectById(this.editorActualObjectAddId);
+   							if (gameObj!=null)
+   							{
+   								strName=gameObj.name+""; //  ["+gameObj.id+"]";
+   							}
+   						}
+   						
+   						var strSelection="<select name='moveToGameobject'>";
+   							var gameO;
+   							strSelection=strSelection+"<option value='-1'>SceneGraph</option>";
+   							for (var a=0;a<this.arrayGameobjects.length;a++)
+   							{
+   								gameO=this.arrayGameobjects[a];
+   								if (
+   									(strName!=gameO.name) 
+   									&&
+   									(strName!=gameO.parent.name) 
+   								   )
+   								{
+   									strSelection=strSelection+"<option value='"+gameO.id+"'>"+gameO.name+"</option>";
+   								}
+   							}
+   							strSelection=strSelection+"</select>";
+   					
+   					if (strName=="SceneGraph") return "<strike>Move objects</strike>";
+   					
+   					return "<form name='inspectorformmove'>Move <strong>"+strName+"</strong> to: "+strSelection+" <input type='button' value='move' onClick=\"gameEngineObj.editorUpdateInspectorMoveGameObject()\"></form>";
+   				}
+   			
+   			/*
+   				GameEngine.Editor.Assets.GUI
+   			*/
+   			// assets
+   			this.editorAssetsToggle = function()
+   			{
+   				// jQueryAnimation
+   				// todo
+   				// if (!this.editorJQueryAnimation) 
+   				$('#divGameEngineAssetsObjects').toggle();
+   				//if (this.editorJQueryAnimation) $('#divGameEngineAssetsObjects').animate( { show: 0 }, 1000);
+   			}
+   			
+   			// editorCreateAssetFromGameObjectById
+   			this.editorCreateAssetFromGameObjectById=function(gameobjId)
+   			{
+   				var obj=this.getGameObjectById(gameobjId);
+   				if (obj!=null)
+   				{
+   					// create
+   					this.createAssetFromGameObject( obj );
+
+   					this.editorDoTheUpdate();
+   					
+   					$('#divGameEngineAssetsObjects').show();
+   				}
+   			}
+   			
+   			// editorSetInspectorAssetById
+   			this.editorSetInspectorAssetById=function(assetId)
+   			{
+   				var obj=this.getAssetById(assetId);
+   				if (obj!=null)
+   				{
+   					// make it actual
+   					//
+   					this.editorActualType="Asset"; 
+ 			  		this.editorActualObject=obj;
+ 
+   					// update it ..
+   				   	this.editorInspectorDoTheUpdate();  
+
+					// set add object
+					if (this.editorActualType=="GameObject") this.editorSetInspectorAddObject(gameobjId);
+					// todo: if (this.editorActualType=="A") this.editorSetInspectorAddObject(gameobjId);
+
+   					this.editorDoTheUpdate();
+   				}
+   			}
+			
+				// editorSetInspectorAssetByIdGameObject
+				this.editorSetInspectorAssetByIdGameObject=function(assetId)
+				{
+					var obj=this.getAssetById(assetId);
+					if (obj!=null)
+					{
+						// make it actual
+						//
+						this.editorActualType="GameObject"; 
+						this.editorActualObject=obj.entity;
+	 
+						// udate it ..
+						this.editorInspectorDoTheUpdate();  
+	
+						// set add object
+						// if (this.editorActualType=="GameObject") this.editorSetInspectorAddObject(gameobjId);
+						// todo: if (this.editorActualType=="A") this.editorSetInspectorAddObject(gameobjId);
+	
+						this.editorDoTheUpdate();
+					}
+				}
+			
+   			/*
+   				UpdateToGameObject
+   				Update-Button
+   			*/
+   			this.editorUpdateInspectorToGameObject=function()
+   			{
+   				// store backward ...
+   				//if (this.editorActualObject!=null)
+   				if (true)
+   				{
+   					var formInspectorForm=document.forms["inspectorform"];
+   					 
+   					// alert(""+formInspectorForm.name.value);
+   					
+   					// update members
+   					this.editorActualObject.active=formInspectorForm.active.checked;
+					
+					// relative to camera
+					// this.editorActualObject.transform.relativeToCamera=formInspectorForm.transformRelativeToCamera;
+   					
+					this.editorActualObject.name=""+formInspectorForm.name.value;
+					
+					// local & absolute
+					var changedPosition=false;
+					 // absolute
+					if (
+						(this.editorActualObject.transform.position.x!=parseFloat(""+formInspectorForm.transform_position_x.value))
+						||
+						(this.editorActualObject.transform.position.y!=parseFloat(""+formInspectorForm.transform_position_y.value))
+						||
+						(this.editorActualObject.transform.position.z!=parseFloat(""+formInspectorForm.transform_position_z.value))
+					   )
+					 {
+					 	changedPosition=true;
+					 }
+
+					// position
+					var positionX=parseFloat(""+formInspectorForm.transform_position_x.value);
+					var positionY=parseFloat(""+formInspectorForm.transform_position_y.value);
+					var positionZ=parseFloat(""+formInspectorForm.transform_position_z.value);
+					this.editorActualObject.transform.setPosition(positionX,positionY,positionZ);
+					
+					
+					// localPosition					
+					var localPositionX=parseFloat(""+formInspectorForm.transform_localposition_x.value);
+					var localPositionY=parseFloat(""+formInspectorForm.transform_localposition_y.value);
+					var localPositionZ=parseFloat(""+formInspectorForm.transform_localposition_z.value);
+					if (this.editorActualObject.parent!=this.sceneGraph)
+					if (changedPosition)
+					{
+						localPositionX=positionX-this.editorActualObject.parent.transform.position.x;
+						localPositionY=positionY-this.editorActualObject.parent.transform.position.y;
+						localPositionZ=positionZ-this.editorActualObject.parent.transform.position.z;
+					}
+					this.editorActualObject.transform.setLocalPosition(localPositionX,localPositionY,localPositionZ);
+					
+					
+					// scale
+					this.editorActualObject.transform.setScale(formInspectorForm.transform_scale_x.value,formInspectorForm.transform_scale_y.value);
+					
+						// components
+						var arrComp=this.editorActualObject.arrComponents;
+   						var compObj;
+   						for (var p=0;p<arrComp.length;p++)
+   						{
+   							compObj=arrComp[p];
+   							
+   							// update fundamentals
+   							eval("compObj.active=formInspectorForm.componentActive"+p+".checked;");
+   							
+   							// update specific things   
+   							compObj.editorUpdate( formInspectorForm );
+						}
+   					
+   					// update position here
+   					this.loopGamePositionUpdateDoRendererRecursivly(this.sceneGraph);
+   					
+   					// update scenegraph
+   					this.editorDoTheUpdate();
+					  
+					// console
+   					this.console("editor","updateObject("+this.editorActualObject.name+")");
+   				}  
+   			}
+   			
+   			// add compontent
+   			this.editorActualGameObjectAddComponent=function()
+   			{
+				var index=document.forms['inspectorform'].componentadd.selectedIndex; 
+				var componentObj=this.arrRegistratedComponents[index]; 
+				var componentName=componentObj.name; 
+				var compObjTmp;
+				var evalStr='compObjTmp=new '+componentName+'(); ';
+				eval(evalStr); 
+				this.editorActualObject.addComponent(compObjTmp);
+				
+				// update it ..
+				this.editorInspectorDoTheUpdate();  
+   			}
+   			
+   				// delete component
+   				this.editorActualGameObjectDeleteComponent=function( ind )
+				{
+					this.editorActualObject.deleteComponentByIndex( ind );					
+					// udate it ..
+					this.editorInspectorDoTheUpdate();  
+				}
+   			
+   			// add gameobject / assets etc
+   			this.editorUpdateInspectorAddGameObject = function()
+   			{
+   				// inspectorformadd
+				var formInspectorFormAdd=document.forms["inspectorformadd"];   				
+				var assetName=""+formInspectorFormAdd.addType.value;
+   				
+   				// create and add
+   				var gameObj=this.createObjectFromAssetByName(assetName);
+   				if (gameObj!=null)
+   				{
+   					var parentObj=this.sceneGraph;
+   					if (this.editorActualObjectAddId!=-1)
+   					{
+   						parentObj=this.getGameObjectById(this.editorActualObjectAddId);
+   						if (parentObj==null)  parentObj=this.sceneGraph;
+   						
+					}
+   					
+   					this.attachToParent(gameObj,parentObj); 
+
+   					// special position: predefined by the editor
+   					if (this.editorSceneEditorActive)
+   					{
+   						gameObj.transform.setPosition((parseInt($('#divSceneEditor').scrollLeft())+parseInt($('#divSceneEditor').css("width"))/2),(parseInt($('#divSceneEditor').scrollTop())+parseInt($('#divSceneEditor').css("height"))/2),gameObj.transform.position.z);
+   					}
+   					
+
+				}
+   				
+   				//update
+   				this.editorDoTheUpdate();
+   			}
+   			
+   			// move gameobject / assets etc
+   			this.editorUpdateInspectorMoveGameObject = function()
+   			{
+   				// inspectorformadd
+				var formInspectorFormMove=document.forms["inspectorformmove"];   				
+				var parentObjectId=""+formInspectorFormMove.moveToGameobject.value;
+   				var parentObj=this.getGameObjectById(parentObjectId);
+   				if (parentObjectId==-1) parentObj=this.sceneGraph;
+   				// move actual object
+   				if (parentObj!=null) { this.editorActualObject.parent=parentObj; }
+   				
+   				//update
+   				this.editorDoTheUpdate();
+   			}
+   			
+   			/*
+   			
+   				Editor: Visual Updates
+   			
+   			*/
+   			
+   			// update the editor?
+   			this.editorDoTheUpdate=function()
+   			{
+   			   if (this.editor)
+   			   {
+   			   
+   				   	   // do console updates ... 
+   				   	   this.editorConsoleDoTheUpdate();
+
+   			   			// project management / scenes
+   			   			this.editorSceneDoTheUpdate();
+   			   		
+   			   			// do the scene graph
+   			   			this.editorSceneGraphDoTheUpdate();
+   			   			
+   			   			// update inspector
+   			   			this.editorInspectorDoTheUpdate();
+   			   			
+   			   			// assets 
+   			   			this.editorAssetsDoTheUpdate();
+   			   	}	
+   				
+   			}
+   				
+   				// console update
+   				this.editorConsoleDoTheUpdate=function()
+   				{
+   				   		$("#divGameEngineConsoleObjects").html(""+this.editorConsoleDiv());
+   				}
+   				
+   				// editorSceneDoTheUpdate
+   				this.editorSceneDoTheUpdate=function()
+   				{
+   					$("#editorDivProjectScenes").html(""+this.editorScenesDiv());
+   				}
+   				
+   				// scene graph
+   				this.editorSceneGraphDoTheUpdate=function()
+   				{
+   				   		$("#divGameEngineSceneGraphObjects").html(""+this.editorSceneGraphDiv());
+   				}
+   				
+   				// do inspector
+   				this.editorInspectorDoTheUpdate=function()
+   				{
+   				   		$("#divGameEngineInspectorObjects").html(""+this.editorInspectorDiv());
+   				}
+   				
+   				// editorAssetDiv
+   				this.editorAssetsDoTheUpdate=function()
+   				{
+   				   		$("#divGameEngineAssetsObjects").html(""+this.editorAssetDiv());
+   				}
+   				
+   		/*
+   			Editor.SceneEditor
+   		*/
+   			// toogle it ...
+   			this.editorSceneEditorToggle = function()
+   			{
+   				// jQueryAnimation
+   				// todo!
+   				// if (!this.editorJQueryAnimation) 
+
+   				this.editorSceneEditorActive=!this.editorSceneEditorActive;
+   				
+   				// show and activate
+   				if (this.editorSceneEditorActive)
+   				{
+   					$('#divSceneEditor').show();
+   					// activate
+					var sceneeditorObj=findGameObjectByName("sceneeditor");
+					if (sceneeditorObj!=null)
+					{
+						sceneeditorObj.active=true;
+					}
+					this.editorDoTheUpdate();
+   				}
+   				// don't show and deactivate
+   				if (!this.editorSceneEditorActive)
+   				{
+   					$('#divSceneEditor').hide();
+   					// deactivate
+					var sceneeditorObj=findGameObjectByName("sceneeditor");
+   					if (sceneeditorObj!=null)
+					{
+						sceneeditorObj.active=false;
+					}
+   					this.editorDoTheUpdate();
+   				}
+   			
+   			}
+   		
+   		   	// set inspector game id to ..
+   			this.editorScrollToSceneEditorGameObjectById=function(gameobjId)
+   			{
+   				var obj=this.getGameObjectById(gameobjId);
+   				if (obj!=null)
+   				{
+   					// scrollTo
+   					if (this.editorSceneEditorActive)
+   					{
+   						// scroll to ...
+	   					// alert("scroll to !");
+						// version 1
+						// $('#divSceneEditor').scrollLeft((obj.transform.position.x-100));
+						// $('#divSceneEditor').scrollTop((obj.transform.position.y-100));
+						// version 2
+						// animate
+	   					$('#divSceneEditor').animate( { scrollLeft: (obj.transform.position.x-100) }, 100 );
+	   					$('#divSceneEditor').animate( { scrollTop: (obj.transform.position.y-100) }, 100 );
+	   					
+	   				}
+   				}
+   			}
+
+   				
+   		/*
+   		
+   			GameEngine: GameObject
+   			
+   		*/
+   		// flat array ...
+   		this.addGameObject = function( gameobjectObject )
+   		{
+   			this.gameobjectId++;
+   			
+   			// add a gameobject here ... 
+   			// add game object ...
+   			this.arrayGameobjects[this.arrayGameobjects.length]=gameobjectObject;
+   			
+   			// gameobjectid
+   			gameobjectObject.id=this.gameobjectId;
+
+			// add to console!!! 
+   			this.console("system","this.addGameObject("+gameobjectObject.name+") }");
+   			
+   			this.editorDoTheUpdate();
+   		}
+ 
+   		this.attach = function( gameobjectObject )
+   		{
+			this.attachToRoot(gameobjectObject);
+		}
+
+   		this.attachToRoot = function( gameobjectObject )
+   		{
+			this.attachToParent(gameobjectObject,null);
+		}
+		
+   		this.attachToParent = function( gameobjectObject, gameobjectParent )
+   		{
+   			// alert("addGameObjectToRoot");
+   			this.console("debug","attachToParent("+gameobjectObject.name+")");
+ 			if (!this.gameobjectExists(gameobjectObject))
+ 			{
+ 				// add here 
+ 				this.addGameObject(gameobjectObject);
+ 			}
+ 			
+ 			if (gameobjectParent==null) gameobjectParent=this.sceneGraph;
+ 			
+ 			this.setParentObject(gameobjectObject,gameobjectParent);
+ 			
+ 			// todo: the onload
+ 			gameobjectObject.onLoad();
+ 			
+ 			// gameobjectObject 
+ 			var compTmp;
+			var arrComp=gameobjectObject.getAllComponent();
+			for (var a=0;a<arrComp.length;a++)
+			{
+				compTmp=arrComp[a];
+				if (compTmp.active) compTmp.onLoad();
+			}
+
+   		}
+   		
+   		// set parent object
+   		this.setParentObject=function(gameobjectChild,gameobjectParent)
+		{
+			gameobjectChild.parent=gameobjectParent;
+			
+   			this.editorDoTheUpdate();
+		}
+
+		// getGameObjectByName
+		this.getGameObjectByName=function( name )
+		{
+			var gameObjectTmp;
+			for (var t=0;t<this.arrayGameobjects.length;t++)
+			{	
+				gameObjectTmp=this.arrayGameobjects[t];
+				if (gameObjectTmp.name==name)
+				{
+					return gameObjectTmp;
+				}
+			}
+			
+			return null;
+		}
+
+		// getGameObjectById
+		this.findGameObjectById=function( gameobjId )
+		{
+			return this.findGameObjectById(gameobjId);
+		}		
+		
+		// getGameObjectById
+		this.getGameObjectById=function( gameobjId )
+		{
+			var gameObjectTmp;
+			for (var t=0;t<this.arrayGameobjects.length;t++)
+			{	
+				gameObjectTmp=this.arrayGameobjects[t];
+				if (gameObjectTmp.id==gameobjId)
+				{
+					return gameObjectTmp;
+				}
+			}
+			
+			return null;
+		}
+		
+		// index ?
+		this.getGameObjectIndex=function(gameobjectLookForObj)
+		{
+			// go through the array and look if it is existing
+			
+			var gameObjectTmp;
+			for (var t=0;t<this.arrayGameobjects.length;t++)
+			{	
+				gameObjectTmp=this.arrayGameobjects[t];
+				if (gameObjectTmp==gameobjectLookForObj)
+				{
+					return t;
+				}
+			}
+			
+			this.console("debug","this.getGameObjectIndex().notfound");
+			return -1;
+		}
+		
+		// exist
+		this.gameobjectExists=function(gameobjectLookForObj)
+		{
+			// go through the array and look if it is existing
+			
+			var gameObjectTmp;
+			for (var t=0;t<this.arrayGameobjects.length;t++)
+			{	
+				gameObjectTmp=this.arrayGameobjects[t];
+				if (gameObjectTmp==gameobjectLookForObj)
+				{
+					return true;
+				}
+			}
+			
+			this.console("debug","this.gameobjectExists().notfound");
+			return false;
+		}
+		
+		
+		
+		
+		// delete / destroy
+		this.deleteGameObject = function( gameObj )
+		{
+			// how to?
+			// cut it away from the gameobjects array
+			// > there are not anymore existing in gameObject.parent etc > no difs
+			// todo: check this correctly
+			var index=this.getGameObjectIndex(gameObj);
+			if (index!=-1)
+			{
+				// deactivate all components
+				gameObj.delete();
+				
+				// todo: problem with the delete
+				// what is with the 
+				
+				// remove from gameobjes
+				this.arrayGameobjects.remove(index);
+   			}
+   		}
+   		
+   			// deleteGameObjectById
+	   		this.deleteGameObjectById = function( id )
+			{
+				var gameObj=this.getGameObjectById( id );
+				this.deleteObject(gameObj);
+			}
+			
+   		/*
+   			GameEngine: Assets
+   		*/
+   		this.arrAssets=new Array(); // assets
+   		// todo: also export!!
+   		this.assetId=1;
+		// add by value
+   		this.addAssetByValue = function( assetName,assetType,assetTypeSub,assetEntityObject )
+   		{
+   			var newAssetObj=new Asset();
+   			    newAssetObj.name=assetName;
+   			    newAssetObj.type=assetType;
+   			    newAssetObj.typeSub=assetTypeSub;
+   			    newAssetObj.entity=assetEntityObject;
+   			 this.addAsset(newAssetObj);
+   			 
+   			 return newAssetObj;
+   		}
+   		
+   		// createAssetFromGameObject
+   		this.createAssetFromGameObject = function( gameO )
+   		{
+   			var newAssetObj=new Asset();
+   			    newAssetObj.name=gameO.name+""+gameO.id;
+   			    newAssetObj.type="GameObject";
+   			    newAssetObj.typeSub="";
+   			    var obj;
+   			    var objScript=gameO.getScript();
+   			    try { eval(objScript); newAssetObj.entity=obj; this.addAsset(newAssetObj); return obj; } catch(e) { this.error("","createAssetFromGameObject("+gameO.name+") "+e); }
+   			    
+   			return null;
+   		}
+   		
+   		
+   		// add an asset
+   		this.addAsset = function( assetObject )
+   		{
+   				// this.console("","addedAsset: "+assetObject.name);
+   				// todo: otherwise use defaults
+   				// if (assetObject.id==-1) 
+   				assetObject.id=this.assetId;
+   				this.arrAssets[this.arrAssets.length]=assetObject;
+   				
+   				// todo: load this asset!
+   				// load-method in every asset!
+   				assetObject.loadOnCreation();
+   				
+   				this.assetId++;
+   				
+   				// update
+   				this.editorAssetsDoTheUpdate();
+   		}
+   		
+   		// get AssetsByType
+   		this.getAssetsByType = function( assetType )
+   		{
+   			var arrTypes = new Array();
+   			
+   				var assetObj;
+   				for (var t=0;t<this.arrAssets.length;t++)
+   				{
+	   				assetObj=this.arrAssets[t];
+	   				if (assetObj.type==assetType)
+	   				{
+		   				arrTypes[arrTypes.length]=assetObj;
+   					}
+   				}
+   				
+   				return arrTypes;
+   		}
+
+		// getAssetById
+   		this.getAssetById = function( assetId )
+   		{
+   				var assetObj;
+   				for (var t=0;t<this.arrAssets.length;t++)
+   				{
+	   				assetObj=this.arrAssets[t];
+	   				if (assetObj.id==assetId)
+	   				{
+		   				return assetObj;
+   					}
+   				}
+   				
+   				return null;
+   		}
+   		
+
+   		// getAssetsByName
+   		this.getAssetsByName = function( assetName )
+   		{
+   			var arrTypes = new Array();
+   			
+   				var assetObj;
+   				for (var t=0;t<this.arrAssets.length;t++)
+   				{
+	   				assetObj=this.arrAssets[t];
+	   				if (assetObj.name==assetName)
+	   				{
+		   				arrTypes[arrTypes.length]=assetObj;
+   					}
+   				}
+   				
+   				return arrTypes;
+   		}
+   		
+   		// get AssetsByType
+   		this.getAssetByName = function( assetName )
+   		{
+   			var arrTypes = this.getAssetsByName( assetName );
+			if (arrTypes.length>0)
+			{
+				return arrTypes[0];
+			}
+			else
+			{
+				return null;
+			}
+   		}
+   		
+   		// remove all assets
+   		this.clearAssets = function()
+   		{
+   			this.arrAssets=new Array();
+   		}
+   		
+   		/*
+   			
+   			Assets and Creation
+   			
+   		*/
+   		
+   		// GameEngine: 
+   		this.createObjectFromAssetByName = function( assetName )
+   		{
+   			// search for this asset .. 
+   			var assetObj=this.getAssetByName(assetName);
+			if (assetObj!=null)
+			{
+				var obj=this.creatObjectFromAsset( assetObj );
+				return obj;
+			}
+			else
+			{
+				this.error("","createObjectFromAssetByName("+assetName+") no asset found!");
+				return null;
+			}
+   		}
+   		
+   		// create object from Asset
+   		this.creatObjectFromAsset = function( assetObj )
+   		{
+   			   	if (assetObj!=null)
+   				{
+	   				this.console("","creatObjectFromAsset("+assetObj.name+"  "+assetObj.entity+")");
+
+	   				// differen type?
+	   				if (assetObj.type=="GameObject")
+	   				{
+	   					// getScript
+	   					var strScript=assetObj.entity.getScript();
+	   					// alert(""+strScript);
+	   					try { eval(strScript); } catch(e) { this.error("","CouldNotInstantiate-Asset "+assetName+" Error: "+e+"  "+strScript); }
+	   					return obj;
+	   				}
+   				}
+   				else
+   				{
+   					this.error("","No Asset Object!");
+   					return null;
+   				}
+   				
+   			return null;
+
+   		}
+   		
+   		/*
+   			GameObject Complex
+   		*/
+   		
+   		/*
+
+   			GameEngine: Components
+
+   		*/
+   		// only registrated components are exposed to editor!
+   		// registerComponent
+   		this.registerComponent = function( componentObj )
+   		{
+   			// do the exposes 
+   			componentObj.exposeEditorAttributes();
+   			
+   			// add them to the registrated components
+   			this.arrRegistratedComponents[this.arrRegistratedComponents.length]=componentObj;
+   		}
+   		
+   		return true;
+   } // / jComponentGameEngine
+   
+   /*
+   		Storage
+   */
+   // used in the editor
+   var Storage = function( )
+   {
+   		this.working=true;
+   		
+   		this.prefix="jComponentGameEngine";
+   		
+   		// test if stoarge is possible
+   		// problem with firefox and local files!
+   		this.start = function() 
+   		{
+   			try { localStorage.setItem(this.prefix+".Check","true"); } catch ( e ) { alert("problem!"+e); this.working=false; }
+   			
+			if (this.working)
+			{
+				// no project?
+				// store first one!
+			}
+			
+   			return this.working; 
+   		}
+   		
+   		// checkFirstStartUp
+   		this.checkFirstStartUp = function()
+   		{
+   		
+   			// simple is a property set, if not 
+   			var strFirstStartup=localStorage.getItem(this.prefix+".startup");
+// todo: alert("checkFirstStartUp: "+strFirstStartup);
+			if (strFirstStartup==null)
+			{
+// todo: alert("checkFirstStartUp: ----- "+strFirstStartup);
+				localStorage.setItem(this.prefix+".startup","done");
+// todo: alert("checkFirstStartUp: "+localStorage.getItem(this.prefix+".firstStartUp"));	
+				return true;
+			}
+			
+   			
+   			return false;
+   		}
+   		
+   		// start scene
+   		this.getStartScene = function( projectName )
+   		{
+   			var str=localStorage.getItem(this.prefix+"."+projectName+".startscene");
+   			return str;
+   		}
+
+   		this.setStartScene = function( projectName, strStartScene )
+   		{
+   			localStorage.setItem(this.prefix+"."+projectName+".startscene", strStartScene);
+   		}
+   		
+   		// project/assets
+   		this.getAssets = function( projectName )
+   		{
+   			var strAssets=localStorage.getItem(this.prefix+"."+projectName+".assets");
+   			return strAssets;
+   		}
+
+   		this.setAssets = function( projectName, strAssets )
+   		{
+   			var strAssets=localStorage.setItem(this.prefix+"."+projectName+".assets", strAssets);
+   			return strAssets;
+   		}
+   		
+   		
+   		
+   		// todo: multiple projects not yet implemented!
+			
+   			
+   			/*
+   				Scenes
+   			*/
+
+			// project/assets
+			this.loadSceneTemp = function( projectName )
+			{
+				var strSceneTemp=localStorage.getItem(this.prefix+"."+projectName+".scenetemp");
+				return strSceneTemp;
+			}
+	
+			this.storeSceneTemp = function( projectName, strSceneTemp )
+			{
+				localStorage.setItem(this.prefix+"."+projectName+".scenetemp", strSceneTemp);
+			}
+   			
+   			
+   			
+				// generate sceneName
+				this.generateSceneName =  function( projectName, sceneName )
+				{
+					var scenePath=""+this.generateSceneBase(projectName)+sceneName;
+					console("localStorage",scenePath);
+					return scenePath;
+				}
+	
+					this.generateSceneBase =  function( projectName, sceneName )
+					{
+						return ""+this.prefix+".project."+projectName+".scene.";
+					}
+
+					   			
+   			// storeScene
+   			this.storeScene = function( projectName, sceneName, strScene )
+   			{
+   				if (this.working)
+   				{
+   					var keyName=this.generateSceneName(projectName, sceneName);
+   					// alert("" + strScene);
+   					localStorage.setItem(this.generateSceneName(projectName, sceneName),strScene);	
+   				}
+   			}
+   			
+			// get all scenes
+			this.getAllScenes = function( projectName )
+			{
+				var allScenesNames=new Array();
+				
+				// alert(""+localStorage.length);
+				if (this.working)
+				{
+					
+					// the scenes
+					for (var t=0;t<localStorage.length;t++)
+					{
+						var key=localStorage.key(t);
+						
+						// check for "jComponentGameEngineProject:xyz"
+						var ind=key.indexOf(this.generateSceneBase(projectName));
+						if (ind==0)
+						{
+							var sceneName=""+key.substring((""+this.generateSceneBase(projectName)).length);
+							allScenesNames[allScenesNames.length]=sceneName;
+							// console("",t+" SceneStoredFound * "+projectName);					
+						}
+						
+						// alert(t+"  "+key+"" +localStorage.getItem(key));
+					}
+					
+					return allScenesNames;
+					
+				}
+				
+								
+			}
+			
+			
+			// loadScene
+			this.loadScene = function( projectName, sceneName )
+			{
+				return localStorage.getItem(this.generateSceneName(projectName, sceneName));
+			}
+			
+			// removeScene
+			this.removeScene = function(projectName, strNameRemove)
+			{
+				// alert(strNameRemove);
+				localStorage.removeItem(this.generateSceneName(projectName, strNameRemove));
+				
+			}
+
+   }
+
+   /*
+   		ConsoleMessage
+   */
+   var ConsoleMessage = function( area, level, msg )
+   {
+   		this.area=area;
+   		this.level=level; // message/warning/error!
+   		this.message=msg;
+   		this.date=new Date();
+   }
+  
+   /*
+   
+   		GameObject
+   		
+   */
+   var GameObject = function()
+   {
+   		// status
+   		this.status="exists"; // exists/deleted ...
+   		
+   		// editor prefs
+   		this.editorAccessHidden=false;
+   		this.editorAccessDelete=true;
+   		
+   		// todo?
+   		// this.gameEngine=null; 
+   		
+   		// update
+   		this.updateCounter=0; // update this object?
+   
+   		// internal id
+   		this.id=0;
+   
+      	// parent
+   		this.parent=null;
+   		
+   		this.name="nonameyet";
+   		
+   		// the class
+   		this.class="GameObject";
+   		
+   		// active?
+   		this.active=true;
+
+   		// transform
+   		this.transform=new Transform();
+   		this.transform.gameObject=this; 
+   		
+   		// children
+   		this.children=new Array();
+   		
+   		// components 
+   		this.componentId=0;
+   		this.arrComponents=new Array();
+
+		// if you would work with inheritage on GameObjects!
+		// default-way: component methods!
+		
+   		this.onLoad = function () { /*  this.console("","onLoad()");  */}
+
+   		this.start = function () { /*  this.console("","start()"); */ }
+   		this.update = function () { /* this.console("","update()");  */}
+   		
+   		// delete
+   		this.delete = function ()
+   		{
+   			// doto:
+   			
+   			// deactive the components & delete
+   			var cmpObj;
+   			for (var z=0;z<this.arrComponents.length;z++)
+   			{
+   				cmpObj=this.arrComponents[z];
+   				
+   				// delete it here
+   				cmpObj.delete();
+   			}
+
+			// clear the array   			
+   			this.arrComponents=new Array();
+   		}
+
+		/*
+		
+   			GameObject: Components-Methods
+   			
+   		*/
+   		// addComponent
+   		
+   		this.addComponent=function(componentObj)
+   		{
+   			componentObj.id=this.componentId;
+   			
+   			componentObj.gameObject=this;
+   			
+   			this.componentId++;
+   			this.arrComponents[this.arrComponents.length]=componentObj;
+   			
+   			this.updateCounter++;
+   		}
+
+		// getComponentByName
+		this.getComponentByName=function( componentName )
+		{
+			var componentObj;
+			for (var u=0;u<this.arrComponents.length;u++)
+			{
+				componentObj=this.arrComponents[u];
+				if (componentObj.name==componentName)
+				{
+					return componentObj;
+				}
+			}
+			
+			return null;
+		}
+   		
+   		// get first ...
+   		this.getFirstComponentByType = function(componentType,componentTypeSub)
+   		{
+   			var arr=this.getAllComponentByType(componentType,componentTypeSub);
+   			
+   			if (arr.length>0)
+   			{
+   				return arr[0];
+   			}
+   			
+   			return null;
+   		}
+   		
+   		// 
+   		// returns array
+   		// active and inactive!
+   		this.getAllComponentByType = function(componentType,componentTypeSub)
+   		{
+   			var arrRetComps=new Array();
+   			var compTemp;
+   			for (var z=0;z<this.arrComponents.length;z++)
+   			{
+   				compTemp=this.arrComponents[z];
+   				if (compTemp.type==componentType)
+   				{
+   					if 
+   					   (
+   					   	(componentTypeSub==null)
+   						||
+   					   	(compTemp.typeSub==componentTypeSub)
+   					   )
+   					// subtype
+   					arrRetComps[arrRetComps.length]=compTemp;
+   				}
+   			}
+   			
+   			return arrRetComps;
+   		}
+
+		// get all 
+   		this.getAllComponent = function(componentType,componentTypeSub)
+   		{
+   			var arrRetComps=new Array();
+   			var compTemp;
+   			for (var z=0;z<this.arrComponents.length;z++)
+   			{
+   				compTemp=this.arrComponents[z];
+   				arrRetComps[arrRetComps.length]=compTemp;
+   			}
+   			
+   			return arrRetComps;
+   		}
+
+   		// get first component by name ...
+   		this.getFirstComponentByName = function(componentName)
+   		{
+   			var arr=this.getAllComponentByName(componentName);
+   			
+   			if (arr.length>0)
+   			{
+   				return arr[0];
+   			}
+   			
+   			return null;
+   		}
+
+   		// getAllComponentByName
+   		this.getAllComponentByName = function(componentName)
+   		{
+   			var arrRetComps=new Array();
+   			var compTemp;
+   			for (var z=0;z<this.arrComponents.length;z++)
+   			{
+   				compTemp=this.arrComponents[z];
+   				if (compTemp.name==componentName)
+   				{
+   					arrRetComps[arrRetComps.length]=compTemp;
+   				}
+   			}
+   			
+   			return arrRetComps;
+   		}
+
+   		// getComponentIndex
+   		this.getComponentIndex = function( componentObj )
+   		{
+   			var compTemp;
+   			for (var z=0;z<this.arrComponents.length;z++)
+   			{
+   				compTemp=this.arrComponents[z];
+   				if (compTemp==componentObj)
+   				{
+   					return z;
+   				}
+   			}
+   			
+   			return -1;
+   		}
+
+				
+		// delete Component
+		this.deleteComponentByName = function( compName )
+		{
+			var compObj=this.getComponentByName( compName );
+			if (compObj!=null)
+			{
+				this.deleteComponent( compObj );
+			}
+		}
+
+		// delete Component
+		this.deleteComponent = function( compObj )
+		{
+			var ind=this.getComponentIndex();
+			this.deleteComponentByIndex(ind);
+		}
+		
+		// delete Component by index
+		this.deleteComponentByIndex = function( ind )
+		{
+			if (ind!=-1)
+			{
+				if (this.arrComponents.length>ind)
+				{
+					this.arrComponents[ind].delete();
+					this.arrComponents.remove(ind);
+				}
+			}
+		}
+
+		
+		// getscript
+		// for exporting ...
+		this.getScript = function()
+		{
+			var strScript="";
+				
+				var gameId=""+this.id;
+				var gameObjectNameCorrect=this.nameScript(); 
+					
+				var gameobjectExportName="gameObj_"+gameObjectNameCorrect+"_"+gameId;
+				var gameobjectClassName=""+this.class;	// default GameObject			
+				
+				// generate here 
+				strScript="\n var "+gameobjectExportName+"=new "+gameobjectClassName+"();";
+
+				// position
+				strScript=strScript+"\n    "+gameobjectExportName+".name=\""+this.name+"\";";
+				strScript=strScript+"\n    "+gameobjectExportName+".class=\""+this.class+"\";";
+				strScript=strScript+"\n    "+gameobjectExportName+".active="+this.active+";";
+				// strScript=strScript+"\n    "+gameobjectExportName+".transform.relativeToCamera="+this.transform.relativeToCamera+";";
+				strScript=strScript+"\n    "+gameobjectExportName+".transform.setPosition("+this.transform.position.x+","+this.transform.position.y+","+this.transform.position.z+");";
+				strScript=strScript+"\n    "+gameobjectExportName+".transform.setLocalPosition("+this.transform.localPosition.x+","+this.transform.localPosition.y+","+this.transform.localPosition.z+");";
+				strScript=strScript+"\n    "+gameobjectExportName+".transform.setScale("+this.transform.scale.x+","+this.transform.scale.y+");";
+
+				// add components
+				// strScript="\n  componentObj=new ";
+				var arrComp=this.arrComponents;
+				var compObj;
+				for (var p=0;p<arrComp.length;p++)
+				{
+					compObj=arrComp[p];
+					strScript=strScript+"\n      var compObj"+p+"=new "+compObj.name+"();";
+					strScript=strScript+"\n            compObj"+p+".active="+compObj.active+";";
+					strScript=strScript+"\n            componentObj=compObj"+p+";";
+					strScript=strScript+"\n"+compObj.getScript();
+					strScript=strScript+"\n    "+gameobjectExportName+".addComponent(compObj"+p+");";
+				}
+
+				// delete: children: add attached gameobjects
+				// delete: search them ...
+								
+				// recursion in the jComponentGameEngine-Class script
+				
+				// at the end ... 
+				// add simple object for more 
+				strScript=strScript+"\n  obj="+gameobjectExportName+";";
+				
+				// work with this gameObj
+				
+			return strScript;
+		}
+			// generate a correct scriptname
+			this.nameScript = function()
+			{
+				var gameObjectNameCorrect=""+this.name;
+					// no spaces etc
+					gameObjectNameCorrect=gameObjectNameCorrect.replace(/[^a-zA-Z0-9]/g,"_");
+				return gameObjectNameCorrect;	
+			}
+			
+			// script helpers
+			this.stringConvertToScript = function( textToString )
+			{
+				// todo: seperate function for component and gameobject !!!!
+				// one function also for the component
+				
+				textToString=textToString.replace(/\n/g,"\\n");
+				textToString=textToString.replace(/\"/g,"\\\"");
+				
+				return textToString;
+			}
+		
+		/*
+		
+		  GameObject: console 
+		  
+		 */
+		this.console = function(area,msg)
+		{
+			console(this.name+"."+area,msg);
+		}
+		// warning 
+		this.warning = function(area,msg)
+		{
+			console(this.name+"."+area,msg);
+		}
+		this.error = function(area,msg)
+		{
+			error(this.name+"."+area,msg);
+		}
+   		
+   		return true;
+   }
+		   
+   /*
+   
+   		Transform
+   
+   */
+   var Transform = function()
+   {
+   		// gameobject
+   		this.gameObject=null;
+   		
+   		// todo: add local
+
+		// todo: not anymore used for gui ... 
+		// this.relativeToCamera=false;
+
+		// absolute position to scene graph root!   		
+		this.position=new Vector3();
+			this.position.x=0.0;
+			this.position.y=0.0;
+			this.position.z=0.0;
+			
+
+		// local added to parents-position!
+		this.localPosition=new Vector3();
+			this.localPosition.x=0.0;
+			this.localPosition.y=0.0;
+			this.localPosition.z=0.0;
+			
+		this.scale=new Vector2();
+			this.scale.x=32.0;
+			this.scale.y=32.0;
+		
+		// setPosition
+		// version 1
+		/*
+		this.setPosition=function(x,y,z)
+   		{
+   			this.position.x=x;
+   			this.position.y=y;
+   			this.position.z=z;
+   			
+   			if (this.gameObject!=null)
+   			{
+   				this.gameObject.updateCounter++;
+   				// error("GameObject("")");
+   			}
+   			else
+   			{
+   				// error !
+   			}
+   		}
+   		*/
+   		
+   		// version 2.0 
+   		this.setPosition=function(x,y,z)
+   		{
+   			// in every case
+   			this.position.x=x;
+   			this.position.y=y;
+   			this.position.z=z;
+   			
+   			// is there a parent object?
+   			if (this.gameObject!=null)
+   			{
+	   			// root?
+	   			var rootFlag=false;
+
+				if (this.gameObject.parent!=null)
+   				{
+   					var parentObj=this.gameObject.parent;
+   					//  this.console("",""+parentObj.name);
+	   				if (parentObj.parent==null)
+	   				{
+   						// absolute
+   						this.position.x=x;
+   						this.position.y=y;
+   						this.position.z=z;
+						rootFlag=true;
+   					}
+   					
+   					// is a child!
+					if (!rootFlag)
+					{
+						var parentObj=this.gameObject.parent;
+						if (parentObj!=null)
+						{
+							var newLocalX=x-parentObj.transform.position.x;
+							var newLocalY=y-parentObj.transform.position.y;
+							var newLocalZ=z-parentObj.transform.position.z;
+							this.gameObject.transform.setLocalPosition(newLocalX,newLocalY,newLocalZ);
+						}
+					}
+
+   				}
+   				
+			}
+			else
+			{
+				// transform without parent!
+				this.error("","transform without parent! ");
+			}
+		}	
+			
+   		
+   		this.setLocalPosition=function(x,y,z)
+   		{
+   			this.localPosition.x=x;
+   			this.localPosition.y=y;
+   			this.localPosition.z=z;
+   			
+   			if (this.gameObject!=null)
+   			{
+   				this.gameObject.updateCounter++;
+   				// error("GameObject("")");
+   			}
+   			else
+   			{
+   				// error !
+   			}
+   		}
+			
+		// scale
+		this.setScale=function(x,y)
+   		{
+   			this.scale.x=x;
+   			this.scale.y=y;
+   			
+   			if (this.gameObject!=null)
+   			{
+   				this.gameObject.updateCounter++;
+   				// error("GameObject("")");
+   			}
+   			else
+   			{
+   				// error !
+   			}
+   		}
+
+		// translate
+		this.translate=function(diffX,diffY,diffZ)
+   		{
+   			// root?
+   			var rootFlag=false;
+   			if (this.gameObject!=null)
+   			{
+	   			if (this.gameObject.parent!=null)
+   				{
+   					var parentObj=this.gameObject.parent;
+   					//  this.console("",""+parentObj.name);
+	   				if (parentObj.parent==null)
+	   				{
+   						// absolute
+   						this.gameObject.transform.setPosition(this.gameObject.transform.position.x+diffX,this.gameObject.transform.position.y+diffY,this.gameObject.transform.position.z+diffZ);
+   						rootFlag=true;
+   					}
+   				}
+   			}
+   			
+   			if (!rootFlag)
+   			{
+   				this.gameObject.transform.setLocalPosition(this.gameObject.transform.localPosition.x+diffX,this.gameObject.transform.localPosition.y+diffY,this.gameObject.transform.localPosition.z+diffZ);
+			}
+   		}
+		
+		
+		// translate
+		
+		return true;
+   }
+   
+   // used for position
+   var Vector3 = function()
+   {
+		this.x=0.0;
+		this.y=0.0;
+		this.z=0.0;
+		
+		this.reset = function() { this.x=0.0; this.y=0.0; this.z=0.0; }
+		
+		return true;
+   }
+
+   // Position used for size etc
+   var Vector2 = function()
+   {
+		this.x=0.0;
+		this.y=0.0;
+		
+		this.reset = function() { this.x=0.0; this.y=0.0; }
+		
+		return true;
+   }
+
+	/*
+   			
+   		Component
+	
+	*/
+				
+				  
+   var Component = function()
+   {
+   		// gameobject
+   		this.gameObject=null; // attached to this gameobject
+   	
+   		// id
+   		this.id=-1;
+   		
+   		// active
+   		this.active=true;
+   		
+   		// type
+   		this.type="component";    // renderer etc ...
+   		this.typeSub=""; 
+   		
+   		// can only be one time on a gameobject ?
+   		this.once=false; 
+
+   		// component 
+   		// class name - toDo - correct this!
+   		this.name="Component";
+   		
+   		
+   		/*
+   			
+   			"Events"
+   			
+   		*/
+   		
+   		// onLoad - add to the 
+		this.onLoad = function() { /* this.console("","onLoad()"); */ }
+		
+   		// start - start in the game loop
+		this.start = function() { /* this.console("","start()"); */ }
+				
+		// update - game loop
+		this.update = function() { }
+	
+		// delete - delete * not yet implemented
+		this.delete = function() { }
+
+   		// events
+   		// onKeyDown
+   		// onKeyUp
+   		// onMouseOver
+   		// onMouseExit
+   		// onMouseDown
+		// onCollision
+
+   		
+   		// getscript
+		this.getScript = function()
+		{
+			var strScript="";
+				
+				// do it with componentObj
+				strScript=strScript+this.getEditorAttributeScript();
+
+			return strScript;
+		}
+   		
+   		
+   		
+   		/*
+   		
+   			Editor
+   			
+   		*/
+   		// functions
+   		this.editorHtml=function()
+   		{
+   			var editorInspectorHtml="";
+
+   			// overwrite if not used!
+   			editorInspectorHtml=editorInspectorHtml+this.getEditorInspectorFormHtml();
+
+   			return editorInspectorHtml; 
+   		}
+   		
+   		// do the update in editor
+   		// editor update > store to the data records ..
+   		this.editorUpdate=function( htmlformObject )
+   		{
+   			// update back to the components!
+   			this.setEditorInspectorFormToData( htmlformObject );
+   		}
+   		
+   		/*
+   		
+   			EditorAttributes
+   		
+   		*/
+   		//
+   		// here you can't define attributes, you can just register/expose them for the editor!!
+   		//
+   		this.arrEditorAttributes=new Array();
+   		
+   		// overwrite this method in your curstom class
+   		// !!!!!!!!!!!
+   		this.exposeEditorAttributes = function()
+   		{
+   			// this.addEditorAttributeByValue( "counter", "int", "textfield" );
+   		}
+   		
+   		// addEditorAttributeByValue
+   		// exp:   .counter=100;
+   		//        .addEditorAttribute( "counter", "int", "textfield" );
+   		// attributeType: int, float, string, text
+   		// attributeInputType: textfield, textearea // not realised yet:  selection*, selectionid* 
+   		this.addEditorAttributeByValue = function( attributeName, attributeType, attributeInputType )
+   		{
+   			 var attributeObject=new EditorAttribute();
+   			 	 
+   			 	 attributeObject.name=attributeName;
+   			 	 attributeObject.type=attributeType;
+   			 	 attributeObject.inputtype=attributeInputType;
+   			 
+   			 this.addEditorAttribute( attributeObject );
+  			 
+  			 // this.setEditorAttribute( attributeName, attributeValue );
+   		}
+   		
+   		//  addAttribute
+   		this.addEditorAttribute = function( attributeObject )
+   		{
+  			 this.arrEditorAttributes[this.arrEditorAttributes.length]=attributeObject;			
+   		}
+   		
+   		
+   		// removeEditorAttributeByName
+   		this.removeEditorAttributeByName = function( attributeName )
+   		{
+   			for(var t=0;t<this.arrEditorAttributes.length;t++)
+   			{
+   				if (this.arrEditorAttributes[t].name==attributeName)
+   				{
+   					this.arrEditorAttributes.remove(t);
+   					break;
+   				}
+   			}
+   		}
+   		
+   		// getEditorHtml ...
+   		this.getEditorInspectorFormHtml = function()
+   		{   
+   			var inspectorComponentHtml="";
+   			
+   			var editorAttr;
+   			for(var t=0;t<this.arrEditorAttributes.length;t++)
+   			{
+   				editorAttr=this.arrEditorAttributes[t];
+   				var strEval="var value=this."+editorAttr.name+";";
+   				try
+   				{
+   					eval(strEval);
+   				}
+   				catch(e)
+   				{
+   					this.error("","add attribute in editor - exception: "+e);
+   				}
+   				var inspectorComponentInput="<input type='textfield' name='"+editorAttr.name+""+this.id+"' value='"+value+"'>";
+   				// todo: textarea etc...
+   					if (editorAttr.inputtype=="textarea") inspectorComponentInput="<textarea type='textfield' name='"+editorAttr.name+""+this.id+"'>"+value+"</textarea>";
+	   			inspectorComponentHtml=inspectorComponentHtml+"<br>"+editorAttr.name+":"+inspectorComponentInput;
+   			}
+   			
+   			return inspectorComponentHtml;
+   		}
+   		
+   		// store back to objects
+   		this.setEditorInspectorFormToData = function( htmlformObject )
+   		{ 
+			
+   			var editorAttr;
+   			for(var t=0;t<this.arrEditorAttributes.length;t++)
+   			{
+   				editorAttr=this.arrEditorAttributes[t];
+   				var strEvalValue="var evalValue=htmlformObject."+editorAttr.name+this.id+".value;";
+   				try {	eval(strEvalValue); this.console("","setEditorInspectorFormToData() : "+strEvalValue+"="+strEvalValue); } catch(e) { this.error("","setEditorInspectorFormToData - value - exception: "+e); }
+					// parse if int or float!
+					if (editorAttr.type=="int") evalValue=0+parseInt(evalValue);
+					if (editorAttr.type=="float") evalValue=0.0+parseFloat(evalValue);
+				var strEval="this."+editorAttr.name+"=evalValue;";
+   				try { 	eval(strEval); } catch(e) { this.error("","setEditorInspectorFormToData - value - exception: "+e); }
+   			}
+   			
+   		}
+   		
+   		// add here
+   		this.exposeEditorAttributes();
+   		
+   		// getEditorAttributeScript
+   		this.getEditorAttributeScript = function()
+   		{
+   			var scriptText="";
+   			
+   			// go through all attributes
+   			var attrObj;
+   			for(var t=0;t<this.arrEditorAttributes.length;t++)
+   			{
+   				attrObj=this.arrEditorAttributes[t];
+
+				var value="";
+				var strEval=" value=this."+attrObj.name+";";
+   				try 
+   				{ 	
+   					// eval here ...
+   					eval(strEval); 
+
+					// the types
+					var stringQuotes="";
+					if (attrObj.type=="string") { stringQuotes="'"; value=this.stringConvertToScript(value); }
+					
+					if (attrObj.type=="float")  { if (value=="") { value=0; this.error("",""+attrObj.name+": empty value for float!"); } }
+					if (attrObj.type=="int")  { if (value=="") { value=0;  this.error("",""+attrObj.name+": empty value for int!"); } }
+					
+					scriptText=scriptText+"\n            componentObj."+attrObj.name+"="+stringQuotes+""+value+""+stringQuotes+";";
+   				
+   				} catch(e) { this.error("","getEditorAttributeScript - value - exception: "+e); }
+   				
+   			}
+   			
+   			return scriptText;
+   		}
+   		
+   		
+   		/*
+   			Component: Helpers
+   		*/
+   			
+   			// script helpers
+			this.stringConvertToScript = function( textToString )
+			{
+				// todo: seperate function for component and gameobject !!!!
+				// one function also for the component
+				
+				textToString=textToString.replace(/\n/g,"\\n");
+				textToString=textToString.replace(/\"/g,"\\\"");
+				
+				return textToString;
+			}
+
+   		
+   		/*
+   		
+   			Console & Warning 
+   		
+   		*/
+		this.console = function(area,msg)
+		{
+			this.gameObject.console(this.name+"."+area,msg);
+		}
+		// warning 
+		this.warning = function(area,msg)
+		{
+			this.gameObject.warning(this.name+"."+area,msg);
+		}
+		this.error = function(area,msg)
+		{
+			this.gameObject.error(this.name+"."+area,msg);
+		}   		
+   		
+   		/*
+   			GameObject: HELPERS
+   		*/
+   		this.convertTextForTextarea = function( htmlTextNotEscape )
+   		{
+   			htmlTextNotEscape=htmlTextNotEscape.replace(/\</g,"&lt;");
+   			htmlTextNotEscape=htmlTextNotEscape.replace(/\>/g,"&gt;");
+			return htmlTextNotEscape;
+   		}
+   		
+   		
+   		return true;
+   		
+   }
+   				
+				/*
+   					Editor Attribute
+   				*/
+   				  var EditorAttribute = function()
+   				  {
+						this.name="namelessEditorAttribute";
+						this.type="string"; // type of the attribute: "string"|"int"|"float"  -> could also be Transform/GameObjects etc ..
+						this.value=""; // value of the attribute
+				  }
+   
+   				
+   				
+		/*
+			
+			Sub Component (inherit) 
+			
+		*/
+		  
+		  /*
+		  		SceneEditor Renderer
+		  		// must be a own class because perhaps changing camera rendering
+		  		
+		  */
+		  		  // ComponentSceneEditorCameraRendererJQuery
+		  // renders camera to jquery divs
+		  function ComponentSceneEditorCameraRendererJQuery() { };
+		  
+		  	 	ComponentSceneEditorCameraRendererJQuery.prototype = new Component();	
+ 		  	 	ComponentSceneEditorCameraRendererJQuery.prototype.name="ComponentSceneEditorCameraRendererJQuery";
+			   	ComponentSceneEditorCameraRendererJQuery.prototype.type="camera";
+				ComponentSceneEditorCameraRendererJQuery.prototype.typeSub="renderer";
+
+			   	ComponentSceneEditorCameraRendererJQuery.prototype.renderToDivName="divSceneEditor";
+
+				// slow down rendering!
+	   		    ComponentSceneEditorCameraRendererJQuery.prototype.renderCounter=0;
+	   		    ComponentSceneEditorCameraRendererJQuery.prototype.renderCounterMax=2;
+	   		    
+	   		    ComponentSceneEditorCameraRendererJQuery.prototype.editorHtml=function()
+				{
+					var editorInspectorHtml="";
+		   			editorInspectorHtml=editorInspectorHtml+this.getEditorInspectorFormHtml();
+					return editorInspectorHtml;
+				}
+				
+					// special for div-rendering: divs are still there after removing the the gameobjects!
+					// 		store and retrieve old divs
+					ComponentSceneEditorCameraRendererJQuery.prototype.arrActualDivs=new Array();
+					ComponentSceneEditorCameraRendererJQuery.prototype.arrActualDivsToDelete=new Array();
+				
+				// onLoad
+				ComponentSceneEditorCameraRendererJQuery.prototype.onLoad=function( )
+				{
+					// clean output port
+					$('#'+this.renderToDivName).html("");   
+				}
+				
+				// graphicloop
+				// update
+				ComponentSceneEditorCameraRendererJQuery.prototype.updateGraphic=function( sceneGraph, arrayGameobjects )
+				{
+					// slow down rendering speed for editor!
+					if (this.renderCounter>this.renderCounterMax) this.renderCounter=0;
+					if (this.renderCounter==0)
+					{
+					
+						this.renderCounter=0;
+				
+						// this.console("updateGraphic","do");
+	
+						// is there an existing div for the gameview
+						// create one?
+						var arrGameEngineObject=$('#'+this.renderToDivName);
+						if (arrGameEngineObject.length==0)
+						{
+							this.error("system","could not find a div with id 'divGame' create my own ");
+							// add a gameframe
+							$("body").append("<div id='"+this.renderToDivName+"'></div><!-- <div id='"+this.renderToDivName+"Spacer' ></div> -->");
+								$('#'+this.renderToDivName).attr("style","border: 1px solid black; position:relative; width: 400px; height: 400px; font-family: helvetica, sans serif; overflow: auto;  left: 0px; top: 0px; z-index: 0;"); 
+						}	
+	
+						// Values
+						var oldValue="";
+						var newValue="";
+	
+						// gameObject
+						var cameraObj=this.gameObject;
+						
+						// update size.x
+						oldValue=$('#'+this.renderToDivName).css("width");
+						newValue=cameraObj.transform.scale.x;
+						if (oldValue!=newValue) {  $('#'+this.renderToDivName).css("width",newValue); }
+						// update size.y
+						oldValue=$('#'+this.renderToDivName).css("height");
+						newValue=cameraObj.transform.scale.y;
+						if (oldValue!=newValue) {  $('#'+this.renderToDivName).css("height",newValue); }
+						
+						// todo: delete
+						// search for playground! 
+						// add here !
+						// for correct displayin
+						
+						// todo: problem: deleted gameobjects!!!
+						// array of all rendered layers
+						// > new rendered >> is one missing -> remove this one!!!
+						
+							// remove the divs from old one
+							this.arrActualDivs=new Array();
+	
+						
+						// go through all divs recursivly ...
+						// is there something?
+						this.updateGraphicDivsRec( sceneGraph, arrayGameobjects );
+						
+							// everything done?
+							// delete the remaining divs
+							var strRemoveDivs="";
+							for (var t=0;t<this.arrActualDivsToDelete.length;++t)
+							{
+								// todo: remove this here
+								strRemoveDivs=strRemoveDivs+","+this.arrActualDivsToDelete[t];
+								// $("#"+this.arrActualDivsToDelete[t]).css("display","none");
+								$("#"+this.arrActualDivsToDelete[t]).remove();
+							}
+							
+							if (this.arrActualDivsToDelete.length>0) this.console("","Camera: Remove this divs: ("+this.arrActualDivsToDelete.length+") "+strRemoveDivs);
+							
+							// update here
+							this.arrActualDivsToDelete=this.arrActualDivs;
+						}							
+				
+						// go on count!
+						this.renderCounter++;
+
+				}
+					
+					// render loop 
+					// simple
+				    ComponentSceneEditorCameraRendererJQuery.prototype.updateGraphicDivsRec=function( gameobjectStart, arrayGameobjects )
+					{
+						// this.console("updateGraphicDivsRec","----"+gameobjectStart.name+"-------- ");
+
+						var gameObjTmp;
+						var count=0;
+						for (var o=0;o<arrayGameobjects.length;o++)
+						{
+							 gameObjTmp=arrayGameobjects[o];
+							 if (gameObjTmp.parent==gameobjectStart)
+							 {
+							 		var correctDivName=gameObjTmp.name;
+							 			correctDivName=correctDivName.replace(/[^a-zA-Z0-9]/g,"_");
+				
+							 		var divName="divGameObj_"+this.renderToDivName+"_"+correctDivName+"_"+gameObjTmp.id;
+
+									// gameObjTmp.console("system","found "+gameObjTmp.name);
+
+									// is there a render/html component?
+									var renderComponent=gameObjTmp.getFirstComponentByType("renderer","html");
+									if (renderComponent!=null)
+									{
+										// renderComponent.console("","foundType(render/html)");
+
+										// active component?
+										if (renderComponent.active)
+										{
+											// 1. generate the divs for this via jquery if necessary
+											// create a new one
+											// generate the 
+											var arrGameEngineObject=$("#"+divName);
+											if (arrGameEngineObject.length==0)
+											{
+												$('#'+this.renderToDivName).append("<div id='"+divName+"' style='position: absolute;'></div>");
+													$("#"+divName+"").css("left",50);
+													$("#"+divName+"").css("top",50);
+													$("#"+divName+"").css("width",150);
+													$("#"+divName+"").css("height",50);	
+													$("#"+divName+"").css("overflow","hidden");	
+													$("#"+divName+"").css("position","absolute");	
+													$("#"+divName+"").css("z-index",""+2000+gameObjTmp.transform.position.z);	
+
+												
+											}
+											
+											// div is active add
+											this.arrActualDivs[this.arrActualDivs.length]=""+divName;
+											// search and delete from old version
+											for (var s=0;s<this.arrActualDivsToDelete.length;s++)
+											{
+												if (this.arrActualDivsToDelete[s]==divName)
+												{
+													this.arrActualDivsToDelete.remove(s);
+												}
+											}
+		
+											// temps
+											var oldVal="";
+											var newVal="";
+											
+											// 2. get latest html
+											// set the output
+											// change from last time?
+											oldVal=$("#"+divName).innerHTML; 
+												// newVal=""+divName+" "+gameObjTmp.transform.position.x+"  "+gameObjTmp.transform.position.y+"<br>"+gameObjTmp.transform.scale.x+"-"+gameObjTmp.transform.scale.y;
+											newVal=renderComponent.renderHtml();
+											if (oldVal!=newVal) $("#"+divName).html(newVal);							
+		
+											// 3. update the objects here ... 
+											// set the left
+											// $("#"+divName).css("background","red");
+		
+											oldVal=""+$("#"+divName).css("display");
+											newVal="block"; if (!gameObjTmp.active) newVal="none";
+											if (newVal!=oldVal) { $("#"+divName).css("display",newVal); }
+		
+											// todo: oldvalue/newvalue									
+											$("#"+divName).css("left",gameObjTmp.transform.position.x+"px");
+											$("#"+divName).css("top",gameObjTmp.transform.position.y+"px");
+											$("#"+divName).css("z-index",(gameObjTmp.transform.position.z));
+											
+											if (gameObjTmp.transform.scale.x!=-1)
+											$("#"+divName).css("width",gameObjTmp.transform.scale.x);
+											if (gameObjTmp.transform.scale.y!=-1)
+											$("#"+divName).css("height",gameObjTmp.transform.scale.y);
+										
+											// alpha/opacity
+											$("#"+divName+"").css("opacity",""+renderComponent.alpha);	
+												$("#"+divName).css("border","0px;");
+
+											// selected object?
+											if (gameEngineObj.editorActualObject==gameObjTmp)
+											{
+//												$("#"+divName).css("z-index",3000);
+//												$("#"+divName).css("border","1px solid #330000;");
+//												$("#"+divName).css("overflow","hidden");
+//												$("#"+divName).css("background","#330000;");
+												
+											}
+											
+										} // component active
+										
+										
+										
+										// component inactive
+										if (!renderComponent.active)
+										{
+											var arrGameEngineObject=$("#"+divName);
+											if (arrGameEngineObject.length>0)
+											{
+											    // $("#"+divName+"").css("display","none");	
+											    $("#"+divName+"").remove();	
+											}
+											
+										}
+										
+									} // component found
+									
+									
+									// Editor Stuff
+									// Selected, Move, Resize ...
+									var divEditorStuffPosition=""+this.renderToDivName+'EditorPosition'+gameObjTmp.id;
+									var arrGameEngineObject=$("#"+divEditorStuffPosition);
+									if (arrGameEngineObject.length==0)
+									{
+										// Editor Position
+										$('#'+this.renderToDivName+"").append("<div id='"+divEditorStuffPosition+"' style='position: absolute;' class='editorMoveAndDescription'><a href='javascript:editorLinkVoid()'; id='"+divEditorStuffPosition+"Move'><img src='editor/position.png' border=0></a><div id='"+divEditorStuffPosition+"Objects' style='display:inline;'></div>");
+											$("#"+divEditorStuffPosition).css("position","absolute");	
+											$("#"+divEditorStuffPosition).css("left",50);
+											$("#"+divEditorStuffPosition).css("top",50);
+											//$("#"+divEditorStuffPosition).css("width",150);
+											//$("#"+divEditorStuffPosition).css("height",20);	
+											$("#"+divEditorStuffPosition).css("overflow","hidden");	
+											$("#"+divEditorStuffPosition).css("z-index","3000"+this.gameObject.transform.position.z);	
+
+										// knowhow
+										// $("#"+divEditorStuffPosition+"").bind('mousedown', { element: ""+gameObjTmp.id }, function(event) {  gameEngineObj.editorSetInspectorGameObjectById("+event.data.element+");  } );
+										
+										// move position 
+										$("#"+divEditorStuffPosition+"Move").bind('mousedown', { element: ""+gameObjTmp.id }, function(event) {  gameEngineObj.editorSetInspectorGameObjectById(event.data.element);  } );
+										$("#"+divEditorStuffPosition+"Move").bind('drag', function(event) {  var positionScrollSceneEditorX=$('#divSceneEditor').scrollLeft(); var positionScrollSceneEditorY=$('#divSceneEditor').scrollTop(); gameEngineObj.editorActualObject.transform.setPosition((positionScrollSceneEditorX+event.pageX),(positionScrollSceneEditorY+event.pageY),gameEngineObj.editorActualObject.transform.position.z); /* slow down update process */  if ((new Date()).getTime()%10==0) { gameEngineObj.editorInspectorDoTheUpdate(); } event.preventDefault();  } );
+
+										$("#"+divEditorStuffPosition+"Objects").bind('mousedown', { element: ""+gameObjTmp.id }, function(event) {  gameEngineObj.editorSetInspectorGameObjectById(event.data.element);  } );
+
+									}
+									$("#"+divEditorStuffPosition).css("left",gameObjTmp.transform.position.x+"px");
+									$("#"+divEditorStuffPosition).css("top",gameObjTmp.transform.position.y+"px");
+									//	$("#"+divEditorStuffPosition).css("width",gameObjTmp.transform.scale.x);
+									//	$("#"+divEditorStuffPosition).css("height",gameObjTmp.transform.scale.y);	
+									$("#"+divEditorStuffPosition).css("width",150);
+									$("#"+divEditorStuffPosition).css("height",20);
+									$("#"+divEditorStuffPosition).css("background","#cccccc");
+									// selected object?
+									if (gameEngineObj.editorActualObject==gameObjTmp)
+									{
+										$("#"+divEditorStuffPosition).css("background","#ff9999");
+				
+										$("#"+divEditorStuffPosition).css("z-index","4000"+gameObjTmp.transform.position.z);	
+										if ((gameObjTmp.transform.scale.x>30)&&(gameObjTmp.transform.scale.y>30))
+										{
+											$("#"+divEditorStuffPosition).css("width",gameObjTmp.transform.scale.x);
+											$("#"+divEditorStuffPosition).css("height",gameObjTmp.transform.scale.y);	
+										}
+									}
+									// show ...
+									// version 1
+									/*
+									var newText="<a href='javascript:editorLinkVoid()'; onClick=\"gameEngineObj.editorSetInspectorGameObjectById("+gameObjTmp.id+");\" >"+gameObjTmp.name+"</a>";
+									if (newText!=$("#"+divEditorStuffPosition+"Objects").html()) { $("#"+divEditorStuffPosition+"Objects").html(newText); }
+									*/
+									$("#"+divEditorStuffPosition+"Objects").html(""+gameObjTmp.name); 
+
+									// add to 
+									this.arrActualDivs[this.arrActualDivs.length]=""+divEditorStuffPosition;									
+									// search and delete from old version
+									for (var s=0;s<this.arrActualDivsToDelete.length;s++)
+									{
+										if (this.arrActualDivsToDelete[s]==divEditorStuffPosition)
+										{
+											this.arrActualDivsToDelete.remove(s);
+										}
+									}
+									
+									// do it recursivly
+									var thisObj=this
+									thisObj.updateGraphicDivsRec(gameObjTmp,arrayGameobjects);
+									
+							 }
+						}
+					}
+		  			
+		  
+		  /*
+		  		Camera Renderer
+		  */
+		  // ComponentCameraRendererJQuery
+		  // renders camera to jquery divs
+		  function ComponentCameraRendererJQuery() { };
+		  
+		  	 	ComponentCameraRendererJQuery.prototype = new Component();	
+ 		  	 	ComponentCameraRendererJQuery.prototype.name="ComponentCameraRendererJQuery";
+			   	ComponentCameraRendererJQuery.prototype.type="camera";
+			   	ComponentCameraRendererJQuery.prototype.typeSub="renderer";
+
+			   	ComponentCameraRendererJQuery.prototype.renderToDivName="divGame";
+			   	ComponentCameraRendererJQuery.prototype.scrolling="auto"; // auto or something like jquery
+			    ComponentCameraRendererJQuery.prototype.exposeEditorAttributes = function()
+   		        {
+   				   this.addEditorAttributeByValue( "renderToDivName", "string", "textfield" );
+   				   this.addEditorAttributeByValue( "scrolling", "string", "textfield" ); // scrolls with the camera position!
+	   		    }
+	   		    ComponentCameraRendererJQuery.prototype.editorHtml=function()
+				{
+					var editorInspectorHtml="";
+		   			editorInspectorHtml=editorInspectorHtml+this.getEditorInspectorFormHtml();
+					editorInspectorHtml=editorInspectorHtml+"<br><br>Attention: Scrolling to the right and down is only working if on of the divs is so big, that you can scroll. Scrolling to right and down will not work endless!";
+					return editorInspectorHtml;
+				}
+				
+					// special for div-rendering: divs are still there after removing the the gameobjects!
+					// 		store and retrieve old divs
+					ComponentCameraRendererJQuery.prototype.arrActualDivs=new Array();
+					ComponentCameraRendererJQuery.prototype.arrActualDivsToDelete=new Array();
+				
+				// onLoad
+				ComponentCameraRendererJQuery.prototype.onLoad=function( )
+				{
+					// clean output port
+					// $('#divGame').html("");   			
+					$('#'+this.renderToDivName).html("");   
+				}
+				
+				// graphicloop
+				// update
+				ComponentCameraRendererJQuery.prototype.updateGraphic=function( sceneGraph, arrayGameobjects )
+				{
+				
+					// this.console("updateGraphic","do");
+
+					// is there an existing div for the gameview
+					// create one?
+					var arrGameEngineObject=$('#'+this.renderToDivName);
+					if (arrGameEngineObject.length==0)
+					{
+						this.error("system","could not find a div with id 'divGame' create my own ");
+						// add a gameframe
+						$("body").append("<div id='"+this.renderToDivName+"'></div>");
+							$('#'+this.renderToDivName).attr("style","border: 1px solid black; width: 400px; height: 400px; font-family: helvetica, sans serif; overflow: hidden; position: relative; left: 0px; top: 0px; z-index: 0;"); 
+					}	
+
+					// Values
+					var oldValue="";
+					var newValue="";
+
+					// gameObject
+					var cameraObj=this.gameObject;
+					
+					// update size.x
+					oldValue=$('#'+this.renderToDivName).css("width");
+					newValue=cameraObj.transform.scale.x;
+					if (oldValue!=newValue) {  $('#'+this.renderToDivName).css("width",newValue); }
+					// update size.y
+					oldValue=$('#'+this.renderToDivName).css("height");
+					newValue=cameraObj.transform.scale.y;
+					if (oldValue!=newValue) {  $('#'+this.renderToDivName).css("height",newValue); }
+					
+					// update scroll
+					// scroll ...
+					// todo: anpassen!
+					if (this.scrolling=="auto")
+					{
+						$('#'+this.renderToDivName).scrollLeft(cameraObj.transform.position.x);
+						$('#'+this.renderToDivName).scrollTop(cameraObj.transform.position.y);
+					}
+					// todo: delete
+					// search for playground! 
+					// add here !
+					// for correct displayin
+					
+					// todo: problem: deleted gameobjects!!!
+					// array of all rendered layers
+					// > new rendered >> is one missing -> remove this one!!!
+					
+						// remove the divs from old one
+						this.arrActualDivs=new Array();
+
+					
+					// go through all divs recursivly ...
+					// is there something?
+					this.updateGraphicDivsRec( sceneGraph, arrayGameobjects );
+					
+						// everything done?
+						// delete the remaining divs
+						var strRemoveDivs="";
+						for (var t=0;t<this.arrActualDivsToDelete.length;++t)
+						{
+							// todo: remove this here
+							strRemoveDivs=strRemoveDivs+","+this.arrActualDivsToDelete[t];
+						   	// $("#"+this.arrActualDivsToDelete[t]).css("display","none");
+							$("#"+this.arrActualDivsToDelete[t]).remove();
+						}
+						
+						if (this.arrActualDivsToDelete.length>0) this.console("","Camera: Remove this divs: ("+this.arrActualDivsToDelete.length+") "+strRemoveDivs);
+						
+						// update here
+						this.arrActualDivsToDelete=this.arrActualDivs;
+						
+				}
+					
+					// render loop 
+					// simple
+				    ComponentCameraRendererJQuery.prototype.updateGraphicDivsRec=function( gameobjectStart, arrayGameobjects )
+					{
+						// this.console("updateGraphicDivsRec","----"+gameobjectStart.name+"-------- ");
+
+						var gameObjTmp;
+						var count=0;
+						for (var o=0;o<arrayGameobjects.length;o++)
+						{
+							 gameObjTmp=arrayGameobjects[o];
+							 if (gameObjTmp.parent==gameobjectStart)
+							 {
+							 		var correctDivName=gameObjTmp.name;
+							 			correctDivName=correctDivName.replace(/[^a-zA-Z0-9]/g,"_");
+				
+							 		var divName="divGameObj_"+this.renderToDivName+"_"+correctDivName+"_"+gameObjTmp.id;
+
+									// gameObjTmp.console("system","found "+gameObjTmp.name);
+
+									// is there a render/html component?
+									var renderComponent=gameObjTmp.getFirstComponentByType("renderer","html");
+									if (renderComponent!=null)
+									{
+										// renderComponent.console("","foundType(render/html)");
+
+										// active component?
+										if (renderComponent.active)
+										{
+											// 1. generate the divs for this via jquery if necessary
+											// create a new one
+											// generate the 
+											var arrGameEngineObject=$("#"+divName);
+											if (arrGameEngineObject.length==0)
+											{
+												$('#'+this.renderToDivName).append("<div id='"+divName+"' style='position: absolute;'></div>");
+													$("#"+divName+"").css("left",50);
+													$("#"+divName+"").css("top",50);
+												//	$("#"+divName+"").css("width",50);
+												//	$("#"+divName+"").css("heigt",50);	
+													$("#"+divName+"").css("overflow","hidden");	
+													// $("#"+divName+"").css("opacity","1.0");	
+													// $("#"+divName+"").css("position","absolute");	
+											}
+											
+											// div is active
+											this.arrActualDivs[this.arrActualDivs.length]=""+divName;
+												// search and delete from old version
+												for (var s=0;s<this.arrActualDivsToDelete.length;s++)
+												{
+													if (this.arrActualDivsToDelete[s]==divName)
+													{
+														this.arrActualDivsToDelete.remove(s);
+													}
+												}
+		
+											// temps
+											var oldVal="";
+											var newVal="";
+											
+											// 2. get latest html
+											// set the output
+											// change from last time?
+											oldVal=$("#"+divName).innerHTML; 
+												// newVal=""+divName+" "+gameObjTmp.transform.position.x+"  "+gameObjTmp.transform.position.y+"<br>"+gameObjTmp.transform.scale.x+"-"+gameObjTmp.transform.scale.y;
+											newVal=renderComponent.renderHtml();
+											if (oldVal!=newVal) $("#"+divName).html(newVal);							
+		
+											// 3. update the objects here ... 
+											// set the left
+											// $("#"+divName).css("background","red");
+		
+											oldVal=""+$("#"+divName).css("display");
+											newVal="block"; if (!gameObjTmp.active) newVal="none";
+											if (newVal!=oldVal) { $("#"+divName).css("display",newVal); }
+		
+											// todo: oldvalue/newvalue									
+											$("#"+divName).css("left",gameObjTmp.transform.position.x+"px");
+											$("#"+divName).css("top",gameObjTmp.transform.position.y+"px");
+											$("#"+divName).css("z-index",(gameObjTmp.transform.position.z));
+											
+											if (gameObjTmp.transform.scale.x!=-1)
+											$("#"+divName).css("width",gameObjTmp.transform.scale.x);
+											if (gameObjTmp.transform.scale.y!=-1)
+											$("#"+divName).css("height",gameObjTmp.transform.scale.y);
+										
+											// alpha/opacity
+											$("#"+divName+"").css("opacity",""+renderComponent.alpha);	
+		
+
+											
+										} // component active
+										
+										// component inactive
+										if (!renderComponent.active)
+										{
+											var arrGameEngineObject=$("#"+divName);
+											if (arrGameEngineObject.length>0)
+											{
+											    $("#"+divName+"").css("display","none");	
+											    
+											    // todo: or remove? what is better?
+											}
+											
+										}
+										
+									} // component found
+									
+									
+									
+									
+									// do it recursivly
+									var thisObj=this
+									thisObj.updateGraphicDivsRec(gameObjTmp,arrayGameobjects);
+									
+							 }
+						}
+					}
+		  
+		  
+		  // Component: Html
+		  // graphic - html ... as output
+		  function ComponentRendererHtml() { }
+		  	  ComponentRendererHtml.prototype=new Component();
+		  	  ComponentRendererHtml.prototype.name="ComponentRendererHtml";
+			  ComponentRendererHtml.prototype.type="renderer";
+			  ComponentRendererHtml.prototype.typeSub="html";
+		  	  ComponentRendererHtml.prototype.html="HTML";
+		  	  ComponentRendererHtml.prototype.alpha=1.0;
+		  	  ComponentRendererHtml.prototype.renderHtml=function()
+		  	  {
+		  	  		var text="";
+		  	  			text=""+this.html;
+					return text;		  	  	
+		  	  }
+		  	  	// editor
+				ComponentRendererHtml.prototype.editorHtml=function()
+				{
+					var convertedText=this.convertTextForTextarea(this.html); // convert < etc !
+					var htmlTemp="Alpha: <input type=textfield name='alpha"+this.id+"' value='"+parseFloat(this.alpha)+"' >";	
+					var htmlTemp=htmlTemp+"<br>Html-Text:<br> <textarea name='html"+this.id+"' cols=30 rows=5 >"+convertedText+"</textarea>";	
+					if (this.html!="") { htmlTemp=htmlTemp+"<br><div style='overflow: auto; border: 1px solid dotted;'>"+this.html+"</div>"; }
+					
+					// divname: 
+					var divName="divGameObj_"+this.gameObject.name+"_"+this.gameObject.id;
+					htmlTemp=htmlTemp+"<br>Div-Name:"+divName;
+
+					return htmlTemp;
+				}
+				
+				// do the update from editor
+				ComponentRendererHtml.prototype.editorUpdate=function( htmlformObject )
+				{
+					eval("this.html=htmlformObject.html"+this.id+".value;");
+					eval("this.alpha=parseFloat(htmlformObject.alpha"+this.id+".value);");
+				}
+				
+				// getscript
+				ComponentRendererHtml.prototype.getScript = function()
+				{
+					var strScript="\n ";
+					    strScript=strScript+"         componentObj.html=\""+this.gameObject.stringConvertToScript(this.html)+"\";";
+					    strScript=strScript+"         componentObj.alpha=\""+this.alpha+"\";";
+					return strScript;
+				}
+				
+
+			// DERIVED by ComponentRendererHtml
+
+		  		// Component: PICTURE
+		  		function ComponentImage() { }
+			  		   ComponentImage.prototype=new ComponentRendererHtml();
+					   ComponentImage.prototype.name="ComponentImage";
+					   ComponentImage.prototype.src="assets/sprite.png";
+					   ComponentImage.prototype.editorHtml=function()
+					   {
+							var htmlTemp="Image-Src: <input type='text' name='src"+this.id+"' value='"+this.src+"'>";	
+							if (this.src!="") {	htmlTemp=htmlTemp+"<br><div style='overflow: auto'><a href='javascript:editorLinkVoid()'; onClick=\"var inspectorImg=document.getElementById('inspectorpicture"+this.id+"');  var formInspectorForm=document.forms['inspectorform'];  formInspectorForm.transform_scale_x.value=inspectorImg.width; formInspectorForm.transform_scale_y.value=inspectorImg.height;\">[GetSize]<br><img src='"+this.src+"' id='inspectorpicture"+this.id+"' border=1></a></div>"; }
+							return htmlTemp;
+ 					   }
+					   ComponentImage.prototype.editorUpdate=function( htmlformObject )
+					   {
+							eval("this.src=htmlformObject.src"+this.id+".value");
+							this.setSrc(this.src);
+					   }
+					   
+					   ComponentImage.prototype.setSrc = function( src )
+					   {
+							this.src=src;
+							this.html="<img src='"+this.src+"'>";
+					   }
+					   
+					   ComponentImage.prototype.getScript = function()
+			  		   {
+  							var strScript="";
+					
+							strScript="\n 		componentObj.setSrc('"+this.src+"');";
+
+							return strScript;
+						}
+
+		  
+		  // Component: Sprite
+		  // Sprite > Render to HTML Renderer
+		  function ComponentSprite() { }
+		  
+   				ComponentSprite.prototype = new Component();
+   				
+   				// overwrite 
+			   	ComponentSprite.prototype.name="ComponentSprite";
+   				ComponentSprite.prototype.src="assets/sprite.png";
+		  		ComponentSprite.prototype.editorHtml=function()
+				{
+					var htmlTemp="Image-Src: <input type='text' name='src"+this.id+"' value='"+this.src+"'>";	
+					
+						if (this.src!="")
+						{
+							htmlTemp=htmlTemp+"<br><div style='overflow: auto'><a href='javascript:editorLinkVoid()'; onClick=\"var inspectorImg=document.getElementById('inspectorpicture"+this.id+"');  var formInspectorForm=document.forms['inspectorform'];  formInspectorForm.transform_scale_x.value=inspectorImg.width; formInspectorForm.transform_scale_y.value=inspectorImg.height;\">[GetSize]<br><img src='"+this.src+"' id='inspectorpicture"+this.id+"' border=1></a></div>";
+						}
+						
+					return htmlTemp;
+				}
+				
+				// do the update from editor
+				ComponentSprite.prototype.editorUpdate=function( htmlformObject )
+				{
+					// update back to the component!
+					// this.src=htmlformObject.src.value;	
+					eval("this.src=htmlformObject.src"+this.id+".value");
+				}
+				
+				
+				// getscript
+				ComponentSprite.prototype.getScript = function()
+				{
+					var strScript="";
+					
+						strScript="\n 		componentObj.src='"+this.src+"';";
+
+					return strScript;
+				}
+
+		  
+		  
+   /*
+   		AssetObject
+   */
+   // todo: are loaded first!
+    var Asset = function()
+   {
+   		// active
+   		this.active=true;
+
+   		this.name="assetName";
+
+		this.type="assetType";  // GameObject (Components / Images etc / )* 
+   		this.typeSub="";
+
+   		this.entity=null;
+   		
+   		this.loadOnCreation = function()
+   		{
+   			// todo: image/texture etc
+   		}
+   		
+   		this.getScript = function()
+   		{
+   			var scriptText="";
+ 
+ 			// todo: different types?
+ 			
+			// create entity
+			var strEntityName="null";
+			
+			scriptText=scriptText+"\n        ";
+			if (this.entity!=null)
+			{
+				var scriptEntity=""+this.entity.getScript();
+	   			scriptText=scriptText+scriptEntity;
+	   			strEntityName=" obj ";
+			}
+   			scriptText=scriptText+"\n addAssetByValue( '"+this.name+"','"+this.type+"','',"+strEntityName+"); ";
+			scriptText=scriptText+"\n        ";
+   			
+   			return scriptText;
+   		}
+				
+   		return true;
+   }
+   
+   // start up the whole thing here ...
+   
+   
+   </script>
+   
+   <!--
+   DEMO for a frame 
+   <div id='divGame' style='width: 500px; height: 500px; border: 1px dotted #000000;'></div>   
+   -->
+   
+   <script>
+   /*
+   		StartIt
+   */
+
+  // construct a 	
+  var gameEngineObj=new jComponentGameEngine();
+  
+  	  // editor prefs
+	  var editorObj=new GameObject();
+		  editorObj.name="sceneeditor";
+		  editorObj.editorAccessDelete=false;
+		  editorObj.transform.setPosition(0,0,0);
+		  editorObj.transform.setScale(400,400);
+		  // add renderer
+		  var componentSceneRenderer=new ComponentSceneEditorCameraRendererJQuery();
+		  editorObj.addComponent(componentSceneRenderer);
+	  gameEngineObj.attachToRoot(editorObj);	  	  
+
+
+	  // camera ...
+	  var cameraObjThis=new GameObject();
+		  cameraObjThis.name="camera";
+		  cameraObjThis.editorAccessDelete=false;
+		  cameraObjThis.transform.setPosition(0,0,0);
+		  cameraObjThis.transform.setScale(400,400);
+		  // add renderer
+		  var componentRendererObj=new ComponentCameraRendererJQuery();
+		  cameraObjThis.addComponent(componentRendererObj);
+		  // temp example *delete
+		  var componentObjTest=new Component();
+			  componentObjTest.active=false;
+		  cameraObjThis.addComponent(componentObjTest);	  
+	  gameEngineObj.attachToRoot(cameraObjThis);
+	  	  // add a renderer ...
+
+	  // add playground
+	  var playgroundObj=new GameObject();
+		  playgroundObj.name="playground";
+		  // playgroundObj.editorAccessDelete=false;
+		  playgroundObj.transform.setPosition(0,0,0);
+		  playgroundObj.transform.setScale(512,512);
+				var backgroundObj=new ComponentImage();
+				backgroundObj.setSrc("assets/background.png");
+		  playgroundObj.addComponent(backgroundObj);
+	  gameEngineObj.attachToRoot(playgroundObj);
+	  
+
+
+	/*
+		HELPERS
+	*/
+// Extended Things
+// Helpfull things
+Array.prototype.remove = function(from, to) {
+  var rest = this.slice((to || from) + 1 || this.length);
+  this.length = from < 0 ? this.length + from : from;
+  return this.push.apply(this, rest);
+};
+
+// 	
+/*
+function dump(arr,level) {
+	var dumped_text = "";
+	if(!level) level = 0;
+	
+	//The padding given at the beginning of the line.
+	var level_padding = "";
+	for(var j=0;j<level+1;j++) level_padding += "    ";
+	
+	if(typeof(arr) == 'object') { //Array/Hashes/Objects 
+		for(var item in arr) {
+			var value = arr[item];
+			
+			if(typeof(value) == 'object') { //If it is an array,
+				dumped_text += level_padding + "'" + item + "' ...\n";
+				dumped_text += dump(value,level+1);
+			} else {
+				dumped_text += level_padding + "'" + item + "' => \"" + value + "\"\n";
+			}
+		}
+	} else { //Stings/Chars/Numbers etc.
+		dumped_text = "===>"+arr+"<===("+typeof(arr)+")";
+	}
+	return dumped_text;
+}	
+
+*/
+
+	/*
+		jGameEngine
+	*/
+	
+	// components for editor
+	// gameEngineObj.registerComponent(new Component());
+	
+	// [editor]
+	// used for editor
+	// gameEngineObj.registerComponent(new ComponentSceneEditorCameraRendererJQuery());
+	// [/editor]
+	
+	gameEngineObj.registerComponent(new ComponentCameraRendererJQuery());
+	gameEngineObj.registerComponent(new ComponentRendererHtml());
+	gameEngineObj.registerComponent(new ComponentImage());
+	// todo: registerComponent
+
+	// todo: add custom
+	// <_script src=''></_script>
+		// custom
+		function ComponentCustom() { }
+		  	  ComponentCustom.prototype=new Component();
+		  	  ComponentCustom.prototype.name="ComponentCustom";
+			  ComponentCustom.prototype.type="behavior";
+			  ComponentCustom.prototype.typeSub="";
+			  ComponentCustom.prototype.start=function() {  this.console("","COMPONENTCUSTOM.START"); } 
+		  	  ComponentCustom.prototype.update=function() { this.gameObject.transform.translate(1.0,0.0,0.0); /* this.gameObject.transform.localPosition.x=this.gameObject.transform.localPosition.x+1; */ }   
+		gameEngineObj.registerComponent(new ComponentCustom());
+		
+		
+		// ComponentMovementSinus: example use the attribute system for expose fields to 
+		//						   editor ...
+		function ComponentMovementSinus() {	}
+			  ComponentMovementSinus.prototype=new Component();
+		  	  ComponentMovementSinus.prototype.name="ComponentMovementSinus";
+			  ComponentMovementSinus.prototype.type="behavior";
+			  ComponentMovementSinus.prototype.typeSub="";
+   	   	
+   	   		  // define the "members"
+   	   		  ComponentMovementSinus.prototype.speed=0.50;
+   	   		  ComponentMovementSinus.prototype.sinMax=30.20;
+			  // expose to the editor
+			  ComponentMovementSinus.prototype.exposeEditorAttributes = function()
+   		      {
+   				  this.addEditorAttributeByValue( "speed", "float", "textfield" );
+   				  this.addEditorAttributeByValue( "sinMax", "float", "textfield" );
+	   		  }
+	   		  
+	   		  // private/local members
+	   		  ComponentMovementSinus.prototype.startY=0.0;
+			  ComponentMovementSinus.prototype.counter=0.0;
+			  
+	   		  // the events to define here!
+			  ComponentMovementSinus.prototype.start=function() {  this.startY=this.gameObject.transform.position.y; } 
+		  	  ComponentMovementSinus.prototype.update=function() {  this.counter=this.counter+this.speed; var tide=Math.sin(this.counter+0.1)*this.sinMax; this.gameObject.transform.translate(0.0,tide,0.0);  /* this.gameObject.transform.localPosition.x=this.gameObject.transform.localPosition.x+1; */ }   
+
+			var compMovementObj=new ComponentMovementSinus();	
+		registerComponent(compMovementObj);
+		
+		// ComponentScript
+		function ComponentScript() { }
+		  	  ComponentScript.prototype=new Component();
+		  	  ComponentScript.prototype.name="ComponentScript";
+			  ComponentScript.prototype.type="behavior";
+			  ComponentScript.prototype.typeSub="";
+			  ComponentScript.prototype.script="alert('hello');";
+			  
+		  	  	// editor
+				ComponentScript.prototype.editorHtml=function()
+				{
+					var htmlTemp="Script-Text:<br> <textarea name='script"+this.id+"' cols=30 rows=5 >"+this.script+"</textarea>";	
+					// if (this.html!="") { htmlTemp=htmlTemp+"<br><div style='overflow: auto; border: 1px solid dotted;'>"+this.html+"</div>"; }
+					return htmlTemp;
+				}
+				// do the update from editor
+				ComponentScript.prototype.editorUpdate=function( htmlformObject )
+				{
+					eval("this.script=htmlformObject.script"+this.id+".value;");
+				}
+
+		gameEngineObj.registerComponent(new ComponentScript());
+		
+		/*
+			Assets
+		*/
+		
+		// todo: include here
+		// include: customAssets.js
+		// 
+		addAssetByValue( "Empty GameObject","GameObject","",new GameObject());
+
+		// Asset: html
+			var htmlGameObject=new GameObject();
+				htmlGameObject.name="HtmlObject";
+				htmlGameObject.transform.setPosition(150,250,10);
+	  			htmlGameObject.transform.setScale(74,128);
+				// add Component
+				var compRenderHtml=new ComponentRendererHtml();
+				compRenderHtml.html="<h1>Texts go on!</h1>";
+				htmlGameObject.addComponent(compRenderHtml);	
+			addAssetByValue( "Html Object","GameObject","",htmlGameObject);
+		
+		// Asset:  simple sprite / image
+			var complexGameObject=new GameObject();
+				complexGameObject.name="Simple Sprite";
+				complexGameObject.transform.setPosition(150,250,10);
+	  			complexGameObject.transform.setScale(74,128);
+				// add Component
+				var compSpriteObj=new ComponentImage();
+				compSpriteObj.setSrc("assets/arrifana.png");
+				complexGameObject.addComponent(compSpriteObj);	
+			addAssetByValue( "Simple Sprite","GameObject","",complexGameObject);
+		
+	/*
+		Assets
+	*/
+	function addAssetByValue( assetName,assetType,assetTypeSub,assetEntityObject )
+	{
+		 gameEngineObj.addAssetByValue( assetName,assetType,assetTypeSub,assetEntityObject ); 
+	}
+
+	function addAsset( assetObj )
+	{
+		 gameEngineObj.addAsset(assetObj); 
+	}
+	
+	/*
+		Console - Debug/Warning/Error
+	*/
+	// console - debugging
+	function console(area,msg)
+	{
+		gameEngineObj.console(area,msg);
+	}
+
+	function warning(area,msg)
+	{
+		gameEngineObj.warning(area,msg);
+	}
+
+	function error(area,msg)
+	{
+		gameEngineObj.error(area,msg);
+	}
+	
+	/*
+		GameObject
+	*/
+	
+	// find by name
+	function findGameObjectByName( name )
+	{
+		return gameEngineObj.getGameObjectByName(name);
+	}
+	
+	// todo: *
+	function attachGameObject()
+	{
+//		gameEngineObj.att(name);
+	}
+
+	// delete
+	function destroyGameObject(gameObj)
+	{
+		// ...
+		gameEngineObj.deleteGameObject(gameObj);
+	}
+	
+	/*
+		Components
+	*/
+	function registerComponent( componentObj )
+	{
+		gameEngineObj.registerComponent(componentObj);
+	}
+		
+	/*
+		
+		SCENE MANAGEMENT*
+		// todo
+		
+	*/
+    function startGame()
+    {
+    	// todo *
+//    	alert("startGame()");
+    
+    	gameEngineObj.startScene();
+    }
+
+/*
+    function loadScene()
+    {
+    	// todo *
+    }
+    
+    function startScene()
+    {
+    	// todo *
+    	gameEngineObj.startGame();
+    }
+
+*/
+
+	/*
+		Editor
+	*/
+	function editorLinkVoid()
+	{
+		// return true;
+	}
+	
+	// editorStoreAs
+	function editorStoreAs( strName )
+	{
+		gameEngineObj.editorSceneStoreAs(strName);
+	}
+		// editorMarkAsFirstScene
+		function editorMarkAsFirstScene()
+		{
+			// store assets
+			gameEngineObj.editorProjectStoreAssets();
+			
+			// alert("editor mark as"+gameEngineObj.actualScene);
+			gameEngineObj.editorSceneStoreAs(gameEngineObj.actualScene);
+		
+			// set first scene
+			gameEngineObj.editorSceneSetStartScene(gameEngineObj.actualScene);
+		}
+
+	
+   </script>
+   
+   
+   
+   
+   <script>
+   	   // activate editor !
+   	  // if used!
+   	  
+  	  gameEngineObj.editor=true;
+  	  // enable editor?  	  
+  	  gameEngineObj.start();
+
+	// add first scene here ...
+	if (gameEngineObj.editorFirstStartUp)
+	{
+	  // mark this as a minimum
+  	  editorStoreAs( "new" );
+	
+	// add some gameobjects
+	// add to root
+	
+	/*
+		gui
+	*/	
+		// gui element!
+	var	gameObjGUILogo=new GameObject();
+		gameObjGUILogo.name="GUILogo";
+		gameObjGUILogo.transform.setLocalPosition(200,0,200); // set local ...
+		gameObjGUILogo.transform.setScale(256,50);
+			var componentLogo=new ComponentImage();
+				componentLogo.setSrc("assets/logo.png");
+			gameObjGUILogo.addComponent(componentLogo);
+		gameEngineObj.attachToParent(gameObjGUILogo,cameraObjThis);
+
+	  // add dude
+	  var dudeObj=new GameObject();
+		  dudeObj.name="dude";
+		  // dudeObj.editorAccessDelete=false;
+		  dudeObj.transform.setPosition(150,150,10);
+		  dudeObj.transform.setScale(128,128);
+				var backgroundObjD=new ComponentImage();
+				backgroundObjD.setSrc("assets/dude_walk1.png");
+		  dudeObj.addComponent(backgroundObjD);
+				var customObj=new ComponentCustom();
+		  dudeObj.addComponent(customObj);
+	 	
+	 	  gameEngineObj.attachToParent(dudeObj,playgroundObj);
+
+		// add child
+		var gameObjChild=new GameObject();
+			gameObjChild.name="sputnik";
+				var componentObjPic=new ComponentImage();
+				componentObjPic.setSrc("assets/sprite.png");
+			gameObjChild.addComponent(componentObjPic);
+				var componentObSinus=new ComponentMovementSinus();
+			gameObjChild.addComponent(componentObSinus);
+			gameEngineObj.attachToRoot(gameObjChild);
+		
+
+
+		// the end
+		editorMarkAsFirstScene();
+	}
+		
+		// load actual
+
+	// testing key down
+	// $('body').keydown(function (event) { alert(""+event.keyCode+"  "+event.key);  });
+	// keydown
+	
+// $("body").bind('keydown',function (event) { console("","keydown: "+event.keyCode+"/"+event.keyChar+"/"+event.metaKey+"("+event.pageX+","+event.pageX+")"); event.preventDefault(); } );
+
+// $(window).bind('keydown',function (event) { console("","keydown: "+event.keyCode+"/"+event.keyChar+"/"+event.metaKey+"("+event.pageX+","+event.pageX+")"); /* event.preventDefault();  */ } );
+
+//	$("body").bind('keyup',function (event) { alert("keyup"+event); } );
+
+//	$("body").bind('mousedown',function (event) { alert("mousedown"+event); } );
+//	$("body").bind('mouseup',function (event) { alert("mouseup"+event); } );
+//$("body").bind('mouseenter',function (event) { console("","mouseenter: "+event.relatedTarget.src+" / "+event.target); event.preventDefault(); } );
+//	$("body").bind('mouseexit',function (event) { alert("mouseexit "+event+" "+event.x); } );
+//	$("body").bind('mouseover',function (event) { alert("mouseover "+event+" "+event.div); } );
+
+	// $("body").bind('keypress',function (event) { alert("keypress "+event.keyCode+" "+event.div); } );
+
+// $(window).bind('mousedown',function (event) { console("","mouseenter: "+event.keyCode+"/"+event.keyChar+"/"+event.metaKey+"--"+event.target+"("+event.pageX+","+event.pageX+")"); /*event.preventDefault();*/ } );
+// $("[divGameObj]").bind('mousedown',function (event) { console("","mousedown divgameobj: "+event.keyCode+"/"+event.keyChar+"/"+event.metaKey+"("+event.pageX+","+event.pageX+")"); /*event.preventDefault();*/ } );
+
+// mouse move store here ..
+// $(window).bind('mousemove',function (event) { console("","mousemove: "+event.keyCode+"/"+event.keyChar+"/"+event.metaKey+"("+event.pageX+","+event.pageX+")"); event.preventDefault(); } );
+
+
+// eventType
+// eventData
+// click
+
+// keypress
+
+//.unbind();
+// mouse
+
+// console.log
+
+// Console.log("hello");
+
+/*
+$("gameObj").bind(	
+	click: function () { },
+	mouseenter: function () { } 
+);
+*/
+
+
+
+
+/*
+$("test.div").bind(
+	
+	click: function () { },
+	mouseenter: function () { } 
+);
+*/
+
+// relatedTarget
+// .target
+// pageX
+// pageY
+// whichfile:///Users/t00cg/Desktop/jComponentGameEngine/start.html#
+// metaKey
+	
+	// $("body").bind('keydown',function (event) { alert(""+event); } );
+
+    </script>
+   made with <a href='jcomponentgameengine.destruct.ch >' target='_blank'>jComponentGameEngine</a>.
+
+<script>
+
+
+
+</script>
+  </body>
+</html>

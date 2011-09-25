@@ -6,6 +6,14 @@
   </head>
   <body onResize="gameEngineObj.editorAdaptScreenPosition();" onLoad="gameEngineObj.editorAdaptScreenPosition();">
   	
+ <!--
+ 		todos: inheritage of editorAttributes is not correct!
+ 			   classa.exposeEditorAttributes
+ 			   classb extends classa > classb.exposeEditorAttributes > also extends classa.exposeEditorAttributes
+ 			   problem: this.add > auf dem grundsäztlichen array?
+ 			   exuted twice: on classa and classb again!
+ 
+ -->
 <!-- GAME ENGINE ONLY THINGS -->
 <!-- without editor: cut away [editor][/editor] - \[editor(.|\r)*editor\]  --> 
 <!--   [editor]sdfasdfasdf sadfasfdsadfasdaffd[/editor] -->
@@ -63,7 +71,7 @@
    {
    		// game engines
    		this.name="jComponentGameEngine";
-   		this.version=0.75;
+   		this.version=0.77;
    		this.jquery=true;
    		
    		// technical thread settings
@@ -209,7 +217,10 @@
    			// 
    			// do the start events ...
    			// update etc ...
-   			// 
+   			
+   			// check collision
+   			// collision event
+   			this.collideEachGameObjects();
    		
    			// alert("loopGameComponentUpdate");
    			// this.console("system","ComponentLoop");
@@ -227,7 +238,106 @@
 				this.intervalUpdateStop=false;
 			}
    		}
-   		
+   					/*
+   					
+   						Collision Detection
+   					
+   					*/
+   				   	this.collisionDetection=null;
+			   		this.setCollisionDetection = function( colDecObj )
+					{
+						this.collisionDetection=colDecObj;
+					}
+					this.collideEachGameObjects = function()
+					{
+						if (this.collisionDetection!=null)
+						{
+							// this.console("","collideEachGameObjects()");
+							var gameObjA;
+							var gameObjB;
+							for (var o=0;o<this.arrayGameobjects.length;o++)
+						 	{
+						 		gameObjA=this.arrayGameobjects[o];
+						 		if (gameObjA.active)
+						 		if (this.collisionDetection.validate(gameObjA))
+					 			for (var oo=0;oo<this.arrayGameobjects.length;oo++)
+					 			{
+							 		gameObjB=this.arrayGameobjects[oo];
+					 				if (gameObjB.active)
+					 				if (this.collisionDetection.validate(gameObjB))
+					 				if (gameObjA.id!=gameObjB.id)
+					 				{
+					 					
+					 					//  _
+					 					// |_|_
+					 					//   |
+					 					// version 1
+					 					/*
+											var matchX=false;
+											var matchY=false;
+											if (gameObjA.transform.position.x>(gameObjB.transform.position.x-gameObjA.transform.scale.x))
+											{
+												if (gameObjA.transform.position.x<(gameObjB.transform.position.x+gameObjB.transform.scale.x))
+												{
+													// this.console("","  collisionX("+gameObjA.name+","+gameObjB.name+") ");
+													matchX=true;
+												}
+											}
+											if (gameObjA.transform.position.y>(gameObjB.transform.position.y-gameObjA.transform.scale.y))
+											{
+												if (gameObjA.transform.position.y<(gameObjB.transform.position.y+gameObjB.transform.scale.y))
+												{
+													// this.console("","  collisionY("+gameObjA.name+","+gameObjB.name+") ");
+													matchY=true;
+												}
+											}
+											if ((matchX)&&(matchY))
+											{
+												this.console("","  collision("+gameObjA.name+","+gameObjB.name+") ");
+											}
+					 					*/
+					 				
+					 					// collide here ...
+					 					// version 2
+					 					var collisionFlag=this.collisionDetection.checkCollision(gameObjA,gameObjB);
+					 					if (collisionFlag)
+					 					{
+											// this.console("","this.doOnCollisionOnGameObject("+gameObjA.name+"("+gameObjA.transform.position.y+"-"+gameObjA.transform.scale.y+"),"+gameObjB.name+"("+gameObjB.transform.position.y+"));"+collisionFlag);
+											this.doOnCollisionOnGameObject(gameObjA,gameObjB);
+											if (!gameObjB.active)
+											{
+					 							this.doOnCollisionOnGameObject(gameObjB,gameObjA);
+					 						}
+					 					}
+					 					
+					 					
+					 				}
+					 			}
+					 		}
+						}
+					}
+							// doOnCollisionOnGameObject
+							this.doOnCollisionOnGameObject = function( objA, objB )
+							{
+								if (objA.active)
+								{
+									if (objB.active)
+									{
+										// collision
+										objA.onCollision(objB);
+										
+										// Comps
+										var arrComp=objA.arrComponents;
+										var compObj;
+										for (var p=0;p<arrComp.length;p++)
+										{
+											compObj=arrComp[p];
+											compObj.onCollision(objB);
+										}
+									}
+								}
+							}
+			
 	   			// Component update scene
 	   			// this.editorSceneGraphDivRecTree
    				this.loopGameComponentUpdateRecursivly=function( gameobjectStart )
@@ -259,7 +369,10 @@
 							this.loopGameComponentUpdateRecursivly(gameObjTmp);
 				 		 }
 				 	}
-   				}   		
+   				}  
+   				
+   					
+		
    		
    		// Thread Position
    		// Position Update Thread
@@ -1053,6 +1166,9 @@
    					// is there an object to show?
    					if (this.editorActualObject!=null)
 					{
+						// do onLoad on every component ...
+						this.doEventOnLoadOnGameObject(this.editorActualObject);
+					
 						// 
 						htmlResult=htmlResult+"<form name='inspectorform'>";
 						htmlResult=htmlResult+"<input type=button value='update' onClick=\"gameEngineObj.editorUpdateInspectorToGameObject()\" style='float: right;'>";
@@ -1932,19 +2048,26 @@
  			
  			this.setParentObject(gameobjectObject,gameobjectParent);
  			
- 			// todo: the onload
- 			gameobjectObject.onLoad();
- 			
- 			// gameobjectObject 
- 			var compTmp;
-			var arrComp=gameobjectObject.getAllComponent();
-			for (var a=0;a<arrComp.length;a++)
-			{
-				compTmp=arrComp[a];
-				if (compTmp.active) compTmp.onLoad();
-			}
+ 			// update it ..
+ 			this.doEventOnLoadOnGameObject(gameobjectObject);
 
    		}
+   		
+   				// doEventOnLoadOnGameObject()
+   				this.doEventOnLoadOnGameObject = function( thisGameObject )
+   				{
+   					// todo: the onload
+ 					thisGameObject.onLoad();
+ 			
+ 					// gameobjectObject 
+ 					var compTmp;
+					var arrComp=thisGameObject.getAllComponent();
+					for (var a=0;a<arrComp.length;a++)
+					{
+						compTmp=arrComp[a];
+						if (compTmp.active) compTmp.onLoad();
+					}
+   				}
    		
    		// set parent object
    		this.setParentObject=function(gameobjectChild,gameobjectParent)
@@ -2250,6 +2373,8 @@
    		// registerComponent
    		this.registerComponent = function( componentObj )
    		{
+   			this.console("","registerComponent("+componentObj.name+")");
+   			
    			// do the exposes 
    			componentObj.exposeEditorAttributes();
    			
@@ -2259,6 +2384,83 @@
    		
    		return true;
    } // / jComponentGameEngine
+   
+   /*
+
+   	 CollisionDetections
+
+   	*/
+   	// simple detection on all objects
+   	var CollisionDetection = function()
+   	{
+   		this.checkCollision = function( gameObjectA, gameObjectB)
+   		{
+   			/*
+   			if ((gameObjectA!=null)&(gameObjectB!=null))
+   			{
+   				return false;
+   			}
+   			
+   			if (gameObjectA.id!=gameObjectB.id) return false;
+   			*/
+			return this.insideRect( gameObjectA.transform.position, gameObjectA.transform.scale, gameObjectB.transform.position, gameObjectB.transform.scale  );
+   		
+   		}
+   		
+   		this.validate = function( gameObjectA )
+   		{
+   			// in this collision detection take them all
+   			//  check for collider here ...
+   			
+   			var compObj=gameObjectA.getComponentByName("ComponentCollider");
+   			if (compObj==null)
+   			{
+   				// gameObjectA.console("","validate(): false");
+   				return false;
+   			}
+   			else
+   			{
+   				// gameObjectA.console("","validate(): true");
+   				return true;
+   			}
+   			
+   			// return true;
+   		}
+   		
+   		// vecA
+   		// ___  vecB
+		// |__|__
+  		//    |  |
+   		//    |__|__
+   		//       |__|
+   		//     
+   		this.insideRect = function( vecPosA, vecScaleA, vecPosB, vecScaleB  )
+   		{
+   			var matchX=false;
+			var matchY=false;
+			if (vecPosA.x>(vecPosB.x-vecScaleA.x))
+			{
+				if (vecPosA.x<(vecPosB.x+vecScaleB.x))
+				{
+					matchX=true;
+				}
+			}
+			if (vecPosA.y>(vecPosB.y-vecScaleA.y))
+			{
+				if (vecPosA.y<(vecPosB.y+vecScaleB.y))
+				{
+					matchY=true;
+				}
+			}
+			if ((matchX)&&(matchY))
+			{
+				return true;
+			}
+			return false;
+   		}
+   	}
+   	
+   	
    
    /*
    		Storage
@@ -2491,6 +2693,8 @@
    		this.start = function () { /*  this.console("","start()"); */ }
    		this.update = function () { /* this.console("","update()");  */}
    		
+   		this.onCollision = function ( gameObj ) {  this.console("",this.name+".onCollision("+gameObj.name+")");  }
+   		
    		// delete
    		this.delete = function ()
    		{
@@ -2527,6 +2731,18 @@
    			this.arrComponents[this.arrComponents.length]=componentObj;
    			
    			this.updateCounter++;
+   		}
+   		
+   		// generate a new component if needed
+   		this.requiresComponent = function( componentObjectTemp )
+   		{
+   			if (this.getComponentByName(componentObjectTemp.name)==null)
+   			{
+   				this.addComponent(componentObjectTemp);
+   				
+				// add this component here 
+				this.warning("","requiresComponent("+componentObjectTemp.name+") not found!");
+   			}
    		}
 
 		// getComponentByName
@@ -3067,10 +3283,16 @@
    		//
    		this.arrEditorAttributes=new Array();
    		
+   		this.resetEditorAttributes = function()
+   		{
+   			this.arrEditorAttributes=new Array();
+   		}
+   		
    		// overwrite this method in your curstom class
    		// !!!!!!!!!!!
    		this.exposeEditorAttributes = function()
    		{
+   			this.resetEditorAttributes();
    			// this.addEditorAttributeByValue( "counter", "int", "textfield" );
    		}
    		
@@ -3081,17 +3303,23 @@
    		// attributeInputType: textfield, textearea // not realised yet:  selection*, selectionid* 
    		this.addEditorAttributeByValue = function( attributeName, attributeType, attributeInputType )
    		{
-   			 var attributeObject=new EditorAttribute();
+   			this.addEditorAttributeByValueAndDesc( attributeName, attributeType, attributeInputType, "" )
+   		}
+   			
+   			this.addEditorAttributeByValueAndDesc = function( attributeName, attributeType, attributeInputType, attributeDesc )
+   			{
+   				var attributeObject=new EditorAttribute();
    			 	 
    			 	 attributeObject.name=attributeName;
    			 	 attributeObject.type=attributeType;
    			 	 attributeObject.inputtype=attributeInputType;
+   			 	 attributeObject.desc=attributeDesc;
    			 
    			 this.addEditorAttribute( attributeObject );
   			 
   			 // this.setEditorAttribute( attributeName, attributeValue );
-   		}
-   		
+   			}
+   			
    		//  addAttribute
    		this.addEditorAttribute = function( attributeObject )
    		{
@@ -3120,6 +3348,7 @@
    			var editorAttr;
    			for(var t=0;t<this.arrEditorAttributes.length;t++)
    			{
+   			
    				editorAttr=this.arrEditorAttributes[t];
    				var strEval="var value=this."+editorAttr.name+";";
    				try
@@ -3130,10 +3359,10 @@
    				{
    					this.error("","add attribute in editor - exception: "+e);
    				}
-   				var inspectorComponentInput="<input type='textfield' name='"+editorAttr.name+""+this.id+"' value='"+value+"'>";
+   				var inspectorComponentInput="<input type='textfield'  name='"+editorAttr.name+""+this.id+"' value='"+value+"'>";
    				// todo: textarea etc...
-   					if (editorAttr.inputtype=="textarea") inspectorComponentInput="<textarea type='textfield' name='"+editorAttr.name+""+this.id+"'>"+value+"</textarea>";
-	   			inspectorComponentHtml=inspectorComponentHtml+"<br>"+editorAttr.name+":"+inspectorComponentInput;
+   					if (editorAttr.inputtype=="textarea") inspectorComponentInput="<br><textarea type='textfield' style='width: 70%' name='"+editorAttr.name+""+this.id+"' width=100%>"+value+"</textarea>";
+	   			inspectorComponentHtml=inspectorComponentHtml+"<br>"+editorAttr.name+":"+inspectorComponentInput+"<i>"+editorAttr.desc+"</i>";
    			}
    			
    			return inspectorComponentHtml;
@@ -3181,7 +3410,7 @@
 
 					// the types
 					var stringQuotes="";
-					if (attrObj.type=="string") { stringQuotes="'"; value=this.stringConvertToScript(value); }
+					if (attrObj.type=="string") { stringQuotes="\""; value=this.stringConvertToScript(value); }
 					
 					if (attrObj.type=="float")  { if (value=="") { value=0; this.error("",""+attrObj.name+": empty value for float!"); } }
 					if (attrObj.type=="int")  { if (value=="") { value=0;  this.error("",""+attrObj.name+": empty value for int!"); } }
@@ -3255,6 +3484,8 @@
 						this.name="namelessEditorAttribute";
 						this.type="string"; // type of the attribute: "string"|"int"|"float"  -> could also be Transform/GameObjects etc ..
 						this.value=""; // value of the attribute
+						
+						this.desc=""; // comment on this attribute
 				  }
    
    				
@@ -3594,7 +3825,7 @@
 			    ComponentCameraRendererJQuery.prototype.exposeEditorAttributes = function()
    		        {
    				   this.addEditorAttributeByValue( "renderToDivName", "string", "textfield" );
-   				   this.addEditorAttributeByValue( "scrolling", "string", "textfield" ); // scrolls with the camera position!
+   				   this.addEditorAttributeByValueAndDesc( "scrolling", "string", "textfield", "'auto': scrolling is connected to camera-object other value you can scroll with what you want, like jquery etc. " ); // scrolls with the camera position!
 	   		    }
 	   		    ComponentCameraRendererJQuery.prototype.editorHtml=function()
 				{
@@ -3719,10 +3950,21 @@
 									if (renderComponent!=null)
 									{
 										// renderComponent.console("","foundType(render/html)");
+										
+										// not auto divName generating
+										if (renderComponent.divName!="auto")
+										{
+											divName=renderComponent.divName;
+											divName=divName.replace(/[^a-zA-Z0-9]/g,"_");
+										}
+										
 
 										// active component?
 										if (renderComponent.active)
 										{
+											// update actDivName if not 'auto'
+											renderComponent.actDivName=''+divName;
+										
 											// 1. generate the divs for this via jquery if necessary
 											// create a new one
 											// generate the 
@@ -3822,19 +4064,19 @@
 			  ComponentRendererHtml.prototype.type="renderer";
 			  ComponentRendererHtml.prototype.typeSub="html";
 		  	  ComponentRendererHtml.prototype.html="HTML";
+		  	  ComponentRendererHtml.prototype.divName="auto";
+		  	  ComponentRendererHtml.prototype.actDivName="";
 		  	  ComponentRendererHtml.prototype.alpha=1.0;
-		  	  ComponentRendererHtml.prototype.renderHtml=function()
-		  	  {
-		  	  		var text="";
-		  	  			text=""+this.html;
-					return text;		  	  	
-		  	  }
+		  	  
+		  	  /*
+		 		// version 1: do it direct in the code
+		 		 
 		  	  	// editor
 				ComponentRendererHtml.prototype.editorHtml=function()
 				{
 					var convertedText=this.convertTextForTextarea(this.html); // convert < etc !
 					var htmlTemp="Alpha: <input type=textfield name='alpha"+this.id+"' value='"+parseFloat(this.alpha)+"' >";	
-					var htmlTemp=htmlTemp+"<br>Html-Text:<br> <textarea name='html"+this.id+"' cols=30 rows=5 >"+convertedText+"</textarea>";	
+					var htmlTemp=htmlTemp+"<br>Html-Text:*<br> <textarea name='html"+this.id+"' cols=30 rows=5 >"+convertedText+"</textarea>";	
 					if (this.html!="") { htmlTemp=htmlTemp+"<br><div style='overflow: auto; border: 1px solid dotted;'>"+this.html+"</div>"; }
 					
 					// divname: 
@@ -3860,14 +4102,118 @@
 					return strScript;
 				}
 				
+				ComponentRendererHtml.prototype.renderHtml=function()
+				  {
+						var text="";
+							text=""+this.html;
+						return text;		  	  	
+				  }
+			*/	
+		  	 
+		  	// ComponentRendererHtml.prototype.arrEditorAttributes=new Array();
+		  	
+		  	   // version 2: use attribute system
+		  	ComponentRendererHtml.prototype.exposeEditorAttributes = function()
+			{
+			  	console("","ComponentRendererHtml.exposeEditorAttributes(alpha)");
+			   // this.resetEditorAttributes();
+			   this.addEditorAttributeByValue( "alpha", "float", "textfield" );
+			   this.addEditorAttributeByValueAndDesc( "divName", "string", "textfield", "'auto' or wished unique divName" );
+			   this.addEditorAttributeByValue( "html", "string", "textarea" ); 
+			}
+			ComponentRendererHtml.prototype.editorHtml=function()
+			{
+				var editorInspectorHtml="";
+			    editorInspectorHtml=editorInspectorHtml+this.getEditorInspectorFormHtml();
+				if (this.html!="") { editorInspectorHtml=editorInspectorHtml+"<br><div style='overflow: auto; border: 1px solid dotted;'>"+this.html+"</div>"; }
+				editorInspectorHtml=editorInspectorHtml+"actDivName: "+this.actDivName; 
+				return editorInspectorHtml;
+			}
+			
+		  	  ComponentRendererHtml.prototype.renderHtml=function()
+		  	  {
+		  	  		var text="";
+		  	  			text=""+this.html;
+					return text;		  	  	
+		  	  }
+		  
+		  			// Component that uses htmlrender
+		  			
+		  			function ComponentImage() { }
+		  			   ComponentImage.prototype=new Component();
+		  			   ComponentImage.prototype.name="ComponentImage";
+		  			   ComponentImage.prototype.type="visual";
+					   ComponentImage.prototype.src="assets/sprite.png";
+		  			   ComponentImage.prototype.scaleFlag="no"; // yes
+		  			   ComponentImage.prototype.onLoad = function(  )
+		  			   {
+		  			   		// adding this component if it's not existing
+		  			   		this.gameObject.requiresComponent(new ComponentRendererHtml());
+		  			   		
+		  			   		// set src here
+		  			   		this.setSrc(this.src);
+		  			   }
+		  			   ComponentImage.prototype.exposeEditorAttributes = function()
+					   {
+						  this.addEditorAttributeByValueAndDesc( "scaleFlag", "string", "textfield", "'no': don't scale image - 'yes': scale image with gameobject scale" );
+						  this.addEditorAttributeByValue( "src", "string", "textfield" );
+					   }
+					   ComponentImage.prototype.setSrc = function( src )
+					   {
+							this.src=src;
+							this.updateRenderComponent();
+					   }
+					   
+					    ComponentImage.prototype.update = function()
+					    {
+					    	this.updateRenderComponent();
+					    }
+					   
+					   ComponentImage.prototype.updateRenderComponent = function( )
+					   {
+					   	  	  var strScale="";
+					   	  	  	  if (this.scaleFlag=="yes")
+					   	  	  	  {
+					   	  	  	  	 strScale=" width="+this.gameObject.transform.scale.x+"  height="+this.gameObject.transform.scale.y+" ";
+					   	  	  	  }
+					   
+					   	  var str="<img border=0 src='"+this.src+"' "+strScale+" >";
+					   	  if (this.gameObject!=null)
+					   	  {
+						   	  var compObj=this.gameObject.getComponentByName("ComponentRendererHtml");
+						   	  if (compObj!=null)
+						   	  {
+						   	  	 // ok there is one
+						   	  	 compObj.html=""+str;
+					   		  }
+   					   	  }
+					   }
+					   
+					   ComponentImage.prototype.editorHtml=function()
+					   {
+							var editorInspectorHtml="";
+							editorInspectorHtml=editorInspectorHtml+this.getEditorInspectorFormHtml();
+							if (this.src!="") {	editorInspectorHtml=editorInspectorHtml+"<br><div style='overflow: auto'><a href='javascript:editorLinkVoid()'; onClick=\"var inspectorImg=document.getElementById('inspectorpicture"+this.id+"');  var formInspectorForm=document.forms['inspectorform'];  formInspectorForm.transform_scale_x.value=inspectorImg.width; formInspectorForm.transform_scale_y.value=inspectorImg.height;\">[GetSize]<br><img src='"+this.src+"' id='inspectorpicture"+this.id+"' border=1></a></div>"; }
+							return editorInspectorHtml;
+ 					   }
+					   
 
 			// DERIVED by ComponentRendererHtml
 
 		  		// Component: PICTURE
+		  		/*
 		  		function ComponentImage() { }
 			  		   ComponentImage.prototype=new ComponentRendererHtml();
 					   ComponentImage.prototype.name="ComponentImage";
 					   ComponentImage.prototype.src="assets/sprite.png";
+					   
+					   // overwrite!
+					   // todo?
+					   ComponentImage.prototype.exposeEditorAttributes = function()
+						{
+						
+						}
+					   
 					   ComponentImage.prototype.editorHtml=function()
 					   {
 							var htmlTemp="Image-Src: <input type='text' name='src"+this.id+"' value='"+this.src+"'>";	
@@ -3894,7 +4240,7 @@
 
 							return strScript;
 						}
-
+				*/
 		  
 		  // Component: Sprite
 		  // Sprite > Render to HTML Renderer
@@ -3936,7 +4282,12 @@
 					return strScript;
 				}
 
-		  
+		 // component collider
+		 // for collision ...
+		 function ComponentCollider() { }
+		   ComponentCollider.prototype=new Component();
+		   ComponentCollider.prototype.name="ComponentCollider";
+		   ComponentCollider.prototype.type="collider";
 		  
    /*
    		AssetObject
@@ -4001,6 +4352,10 @@
 
   // construct a 	
   var gameEngineObj=new jComponentGameEngine();
+  
+  	  // use collision detection on the base of collider
+  	  gameEngineObj.setCollisionDetection(new CollisionDetection());
+  
   
   	  // editor prefs
 	  var editorObj=new GameObject();
@@ -4095,6 +4450,10 @@ function dump(arr,level) {
 	// gameEngineObj.registerComponent(new ComponentSceneEditorCameraRendererJQuery());
 	// [/editor]
 	
+    // collider
+	gameEngineObj.registerComponent(new ComponentCollider());
+	
+	// visuals
 	gameEngineObj.registerComponent(new ComponentCameraRendererJQuery());
 	gameEngineObj.registerComponent(new ComponentRendererHtml());
 	gameEngineObj.registerComponent(new ComponentImage());

@@ -71,7 +71,7 @@
    {
    		// game engines
    		this.name="jComponentGameEngine";
-   		this.version=0.8;
+   		this.version=0.87;
    		this.jquery=true;
    		
    		// technical thread settings
@@ -193,6 +193,7 @@
 			this.editorActualType; // todo: solved by typeof? GameObject | Asset
 			this.editorActualTypeSub; // todo: solved by typeof?
 			this.editorActualObject;
+			this.editorActualObjectIdForRestore=-1;
 			this.editorActualObjectAddId=-1; // -1/other ids..
 		
 			// editor storage
@@ -396,6 +397,65 @@
 								}
 							}
 		
+					// look into the future ...
+					// check possible collision!
+					this.checkCollisionForLabelOffset = function( testGameObj, label, offsetX, offsetY )
+					{
+						var gameObjA=new GameObject();
+							
+						if (testGameObj!=null)	
+						if (this.collisionDetection!=null)
+						{
+							gameObjA.id=testGameObj.id;
+							
+							gameObjA.transform.position.x=testGameObj.transform.position.x+offsetX;
+							gameObjA.transform.position.y=testGameObj.transform.position.y+offsetY;
+							gameObjA.transform.position.z=testGameObj.transform.position.z;
+							
+							gameObjA.transform.scale.x=testGameObj.transform.scale.x;
+							gameObjA.transform.scale.y=testGameObj.transform.scale.y;
+							
+						
+						 		// if (gameObjA.active)
+						 		// if (this.collisionDetection.validate(gameObjA))
+					 			for (var oo=0;oo<this.arrayGameobjects.length;oo++)
+					 			{
+							 		gameObjB=this.arrayGameobjects[oo];
+					 				if (gameObjB.active)
+					 				if (this.collisionDetection.validate(gameObjB))
+					 				if (gameObjA.id!=gameObjB.id)
+					 				{	
+					 					// check collision here
+					 					var collisionFlag=this.collisionDetection.checkCollision(gameObjA,gameObjB);
+					 					if (collisionFlag)
+					 					{
+					 						// every
+					 						if (label=="every")
+					 						{
+					 							return gameObjB;
+					 						}
+					 						else
+					 						{	
+					 							var arr=gameObjB.getAllComponentsByName("ComponentCollider");
+					 							var colliderObj;
+					 							for (var a=0;a<arr.length;a++)
+					 							{
+					 								colliderObj=arr[a];
+					 								if (colliderObj.label==label)
+					 								{
+					 									return gameObjB;
+					 								}
+					 							}
+					 						}
+					 						
+					 						
+					 					}
+					 					
+					 					
+					 				}
+					 			}
+					 		}
+					}
    		
    		// Thread Position
    		// Position Update Thread
@@ -934,6 +994,12 @@
    			var tempScript=this.getScriptScene();
    			this.editorStoreSceneTemp(tempScript);
    			
+   			// save the actual object in the scene
+   			if (this.editorActualObject!=null)
+   			{
+   				this.editorActualObjectIdForRestore=this.editorActualObject.id;
+   			}
+   			
    			// debind
    			input.stop();
    			
@@ -967,9 +1033,19 @@
    			// retrieve actual scene
 			var sceneScript=this.editorLoadSceneTemp();
 				this.evalScene(sceneScript);
+				
+			// todo: problem actual selected object
+			this.editorActualObject=null;
+			/*
+			if (this.editorActualObjectIdForRestore!=-1)
+			{
+				this.editorSetInspectorGameObjectById( this.editorActualObjectIdForRestore );
+			}
+			*/
+			
 			
 			// update it
-			this.editorDoTheUpdate();
+			this.editorDoTheUpdate();   
    		}
    		
 			// load ...
@@ -1061,7 +1137,7 @@
 					}
 					
 					html=html+"<div class='editorDivMode'>";	   				
-					html=html+"<div id='editorPlayButton'><a href='javascript:editorLinkVoid()'; onClick=\"gameEngineObj.editorStartGame();$('#editorPlayButton').hide();$('#editorPlayRunningButton').css('display','inline');\">Play Scene ></a></div> <div id='editorPlayRunningButton'><a href='javascript:editorLinkVoid()'; onClick=\"gameEngineObj.editorStopGame();$('#editorPlayButton').show();$('#editorPlayRunningButton').hide();\">Stop running ||</a> Game running: no savings!</div>";
+					html=html+"<div id='editorPlayButton'><a href='javascript:editorLinkVoid()'; onClick=\"gameEngineObj.editorStartGame();$('#editorPlayButton').hide();$('#editorPlayRunningButton').css('display','inline'); $('.editorDivProjectManagementContainer').toggle();\">Play Scene ></a></div> <div id='editorPlayRunningButton'><a href='javascript:editorLinkVoid()'; onClick=\"gameEngineObj.editorStopGame();$('#editorPlayButton').show();$('#editorPlayRunningButton').hide();$('.editorDivProjectManagementContainer').toggle();\">Stop running ||</a> Game running: no savings!</div>";
 					html=html+"";
 					html=html+"</div>";
 	   				html=html+"</form>  ";
@@ -1278,6 +1354,10 @@
 							
 						htmlResult=htmlResult+"</form>";
 					} 
+					else
+					{
+						htmlResult="";
+					}
    				}
    				
    				// detail 
@@ -1922,7 +2002,7 @@
    			*/
    			
    			// update the editor?
-   			this.editorDoTheUpdate=function()
+   			this.editorDoTheUpdate = function()
    			{
    			   if (this.editor)
    			   {
@@ -2507,6 +2587,10 @@
    		// prevent
    		this.prevent=false;
    		
+   		// mouse things
+   		this.mousePositionX=0.0;
+   		this.mousePositionY=0.0;
+   		
    		// simple
    		this.arrKeysName=new Array();
    		this.arrKeysStatus=new Array();
@@ -2522,6 +2606,15 @@
    			// redirect: do this as an event in the gameengine
    			$(window).bind('keydown',function (event) { input.setKey(event.which,true);  var chc=event.charCode; console("","keydown: "+event.keyCode+","+event.which+"-"+event.charCode+" ("+chc+","+String.fromCharCode(event.keyCode)+") )");   if (this.prevent) event.preventDefault();   } );
    			$(window).bind('keyup',function (event) { input.setKey(event.which,false);  if (this.prevent)   event.preventDefault();   } );
+		
+			// mouse 
+			$(window).bind('mousemove',function (event) { input.mousePositionX=event.pageX; input.mousePositionY=event.pageY; if (this.prevent) event.preventDefault(); } );
+			// do also the check for mouse down / up in the sceneGraph
+
+//			$(window).bind('click',function (event) { this.console("","click here and now .."); /* gameEngineObj.inputDoEvent(); */ if (this.prevent) event.preventDefault(); } );
+			// mouse down and up
+			$(window).bind('mousedown',function (event) { this.console("","mousedown: click here and now .."); /* gameEngineObj.inputDoMouseDownEvent(); */ if (this.prevent) event.preventDefault(); } );
+			$(window).bind('mouseup',function (event) { this.console("","mouseup: click here and now .."); /* gameEngineObj.inputDoMouseUpEvent(); */ if (this.prevent) event.preventDefault(); } );
 		}
    		
    			// setKey
@@ -2563,6 +2656,9 @@
    			
    			$(window).unbind('keydown');
    			$(window).unbind('keyup');
+
+			$(window).unbind('mousemove');
+
    		}
    	
    	}
@@ -2850,6 +2946,23 @@
 				this.warning("","requiresComponent("+componentObjectTemp.name+") not found!");
    			}
    		}
+		// getAllComponentsByName
+		this.getAllComponentsByName=function( componentName )
+		{
+			var arrComponentsTemp=new Array();
+			
+			var componentObj;
+			for (var u=0;u<this.arrComponents.length;u++)
+			{
+				componentObj=this.arrComponents[u];
+				if (componentObj.name==componentName)
+				{
+					arrComponentsTemp[arrComponentsTemp.length]=componentObj;
+				}
+			}
+			
+			return arrComponentsTemp;
+		}
 
 		// getComponentByName
 		this.getComponentByName=function( componentName )
@@ -2923,7 +3036,7 @@
    		// get first component by name ...
    		this.getFirstComponentByName = function(componentName)
    		{
-   			var arr=this.getAllComponentByName(componentName);
+   			var arr=this.getAllComponentsByName(componentName);
    			
    			if (arr.length>0)
    			{
@@ -2933,8 +3046,8 @@
    			return null;
    		}
 
-   		// getAllComponentByName
-   		this.getAllComponentByName = function(componentName)
+   		// getAllComponentsByName
+   		this.getAllComponentsByName = function(componentName)
    		{
    			var arrRetComps=new Array();
    			var compTemp;
@@ -3862,7 +3975,7 @@
 										
 										// move position 
 										$("#"+divEditorStuffPosition+"Move").bind('mousedown', { element: ""+gameObjTmp.id }, function(event) {  gameEngineObj.editorSetInspectorGameObjectById(event.data.element);  } );
-										$("#"+divEditorStuffPosition+"Move").bind('drag', function(event) {  var positionScrollSceneEditorX=$('#divSceneEditor').scrollLeft(); var positionScrollSceneEditorY=$('#divSceneEditor').scrollTop(); gameEngineObj.editorActualObject.transform.setPosition((positionScrollSceneEditorX+event.pageX),(positionScrollSceneEditorY+event.pageY),gameEngineObj.editorActualObject.transform.position.z); /* slow down update process */  if ((new Date()).getTime()%10==0) { gameEngineObj.editorInspectorDoTheUpdate(); } event.preventDefault();  } );
+										$("#"+divEditorStuffPosition+"Move").bind('drag', function(event) { /* console("","drag: ("+event.pageX+"/"+event.pageY+") "); */ /* bugfix for chrome and firefox: last event is (0,0)  */ var doDrag=true; if ((event.pageX==0)&&(event.pageY==0)) doDrag=false; if (doDrag) { var positionScrollSceneEditorX=$('#divSceneEditor').scrollLeft(); var positionScrollSceneEditorY=$('#divSceneEditor').scrollTop(); gameEngineObj.editorActualObject.transform.setPosition((positionScrollSceneEditorX+event.pageX),(positionScrollSceneEditorY+event.pageY),gameEngineObj.editorActualObject.transform.position.z); /* slow down update process */  if ((new Date()).getTime()%10==0) { gameEngineObj.editorInspectorDoTheUpdate(); } } /* event.preventDefault(); */  } );
 
 										$("#"+divEditorStuffPosition+"Objects").bind('mousedown', { element: ""+gameObjTmp.id }, function(event) {  gameEngineObj.editorSetInspectorGameObjectById(event.data.element);  } );
 
@@ -4302,6 +4415,243 @@
 							if (this.src!="") {	editorInspectorHtml=editorInspectorHtml+"<br><div style='overflow: auto'><a href='javascript:editorLinkVoid()'; onClick=\"var inspectorImg=document.getElementById('inspectorpicture"+this.id+"');  var formInspectorForm=document.forms['inspectorform'];  formInspectorForm.transform_scale_x.value=inspectorImg.width; formInspectorForm.transform_scale_y.value=inspectorImg.height;\">[GetSize]<br><img src='"+this.src+"' id='inspectorpicture"+this.id+"' border=1></a></div>"; }
 							return editorInspectorHtml;
  					   }
+ 					   
+ 			/*
+				Animation
+				Simple System
+				
+				AnimationController
+				- AnimationA
+				- AnimationB
+				- AnimationC
+				
+			*/
+					// an animation controller
+					function AnimationController() { }
+		  			   AnimationController.prototype=new Component();
+		  			   AnimationController.prototype.name="AnimationController";
+		  			   AnimationController.prototype.type="visual";
+					   AnimationController.prototype.src="assets/sprite.png";
+		  			   
+		  			   AnimationController.prototype.startWithAnimation="firstAnimation";
+		  			   AnimationController.prototype.startWithAnimationTemp="firstAnimation";
+		  			   
+		  			   AnimationController.prototype.actualAnimation="firstAnimation";
+		  			   
+		  			   // todo: animation list ...
+		  			   // 		mix some animations etc
+		  			   
+		  			   AnimationController.prototype.onLoad = function(  )
+		  			   {
+		  			   		// adding this component if it's not existing
+		  			   		// load an animation component
+		  			   		// todo: problem manual
+		  			   		this.gameObject.requiresComponent(new Animation());
+
+							// on load ..
+							// this.startAnimation(this.startWithAnimation);
+		  			   }
+		  			   AnimationController.prototype.exposeEditorAttributes = function()
+					   {
+						  this.addEditorAttributeByValueAndDesc( "startWithAnimation", "string", "textfield", "first animation to play" );
+					   }
+					   AnimationController.prototype.startAnimation = function( selectedAnimationName )
+					   {
+					   		this.console("","startAnimation("+selectedAnimationName+")");
+					   		
+					   		// deactive all the rest and start this one
+					   		var arr=this.gameObject.getAllComponentsByName("Animation");
+							var animationObj;
+							for (var a=0;a<arr.length;a++)
+							{
+								animationObj=arr[a];
+								animationObj.active=false;
+								if (animationObj.animationName=selectedAnimationName)
+								{
+									animationObj.active=true;
+									animationObj.actualFrame=animationObj.startFrame;
+									this.actualAnimation=selectedAnimationName;
+								}
+							}
+					   		
+					   }
+					   
+					   AnimationController.prototype.start = function() { }
+					    
+					   AnimationController.prototype.update = function() 
+					   {
+					   		// direct manipulations
+					   		if (this.startWithAnimationTemp!=this.startWithAnimation)
+					   		{
+						   		this.startAnimation(this.startWithAnimation);
+						   		this.startWithAnimationTemp=this.startWithAnimation;
+						   	}
+					   }
+					   
+					   
+					   AnimationController.prototype.editorHtml=function()
+					   {
+							var editorInspectorHtml="";
+							editorInspectorHtml=editorInspectorHtml+"Add animation for controlling";
+							editorInspectorHtml=editorInspectorHtml+this.getEditorInspectorFormHtml();
+							
+							// actual animations registrated ...
+							// 
+							editorInspectorHtml=editorInspectorHtml+"Actual Animations:";
+							var arr=this.gameObject.getAllComponentsByName("Animation");
+							var animationObj;
+							for (var a=0;a<arr.length;a++)
+							{
+								animationObj=arr[a];
+								editorInspectorHtml=editorInspectorHtml+"<br>"+a+" "+animationObj.animationName;
+							}
+							
+							// delete one?
+							
+							// add one?
+							
+							return editorInspectorHtml;
+ 					   }
+					
+			
+					// a simple animation
+					function Animation() { }
+		  			   Animation.prototype=new Component();
+		  			   Animation.prototype.name="Animation";
+		  			   Animation.prototype.type="visual";
+					   Animation.prototype.src="assets/sprite.png";
+		  			   
+		  			   Animation.prototype.animationName="firstAnimation";
+
+		  			   Animation.prototype.speed=0.1;
+		  			   Animation.prototype.startFrame=0;
+		  			   Animation.prototype.actualFrame=0;
+		  			   Animation.prototype.animationType="loop"; // once | loop
+		  			   Animation.prototype.animationDone=false; // animation done?
+		  			   Animation.prototype.frames="assets/animation0.png;assets/animation1.png"; // ; separated
+		  			   Animation.prototype.scaleFlag="no"; // yes
+		  			   
+		  			   // temp
+		  			   Animation.prototype.animationTimeLastUpdate=0;
+		  			   
+		  			   Animation.prototype.onLoad = function(  )
+		  			   {
+		  			   		// adding this component if it's not existing
+		  			   		this.gameObject.requiresComponent(new ComponentRendererHtml());
+		  			   		
+		  			   		// adding animation controller?
+		  			   		// this.gameObject.requiresComponent(new AnimationController());
+		  			   		
+		  			   		try
+		  			   		{
+			  			   		var arrFrames=(this.frames).split(";");
+								if (arrFrames.length>0)
+								{
+									this.src=arrFrames[0];
+								}
+		  					}
+		  					catch(e)
+		  					{
+		  						this.console("","error with animation-split "+e);
+		  					}
+		  					
+		  			   		// set src here
+		  			   		this.setSrc(this.src);
+		  			   }
+		  			   Animation.prototype.exposeEditorAttributes = function()
+					   {
+						  this.addEditorAttributeByValueAndDesc( "animationName", "string", "textfield", "name of the animation" );
+						  this.addEditorAttributeByValueAndDesc( "speed", "float", "textfield", "wait 0.05 secs till next frame" );
+						  this.addEditorAttributeByValueAndDesc( "startFrame", "int", "textfield", "start frame" );
+						  this.addEditorAttributeByValueAndDesc( "animationType", "string", "textfield","'once' / 'loop'" );
+						  this.addEditorAttributeByValueAndDesc( "frames", "string", "textarea", "picture0.png;picture1.png;picture2.png" );
+						  this.addEditorAttributeByValueAndDesc( "scaleFlag", "string", "textfield", "'no': don't scale image - 'yes': scale image with gameobject scale" );
+					   }
+					   Animation.prototype.setSrc = function( src )
+					   {
+							this.src=src;
+							this.updateRenderComponent();
+					   }
+					    Animation.prototype.start = function()
+					    {
+					    	// on start set date and time
+					    }
+					    
+					    Animation.prototype.update = function()
+					    {
+					    	var doTheUpdate=false;
+					    	
+					    	// use a simple and do it ...
+					    	// if (this.animationTimeLastUpdate==0) { this.actualFrame=this.startFrame; this.animationTimeLastUpdate=(new Date()).getTime(); }
+					    	
+					    	if ( ((new Date()).getTime()-this.animationTimeLastUpdate) > (this.speed*1000.0) )
+					    	{
+					    		doTheUpdate=true;
+					    		this.actualFrame++;
+					    		this.animationTimeLastUpdate=(new Date()).getTime();
+					    	}
+					    	
+					    	// do the update now !
+					    	if (doTheUpdate)
+					    	{
+					    		try
+					    		{
+						    		var arrFrames=this.frames.split(";");
+						    		var maxFrame=arrFrames.length;
+					    		
+					    			if (maxFrame>0)
+					    			{
+						    			// loop? or once?
+						    			if (this.actualFrame>=maxFrame)
+						    			{
+						    				// start from new?
+						    				if (this.animationType=="loop") { this.actualFrame=0; }
+						    				else this.animationDone=true;
+						    			}
+						    			
+						    			// get actual frame and set it ..
+						    			var animationFile=arrFrames[this.actualFrame];
+						    			// this.console("","update("+this.actualFrame+")");
+						    			this.setSrc(animationFile);
+						    		}
+								}
+								catch(e)
+								{
+									this.error("","could not find correct "+e);
+								}
+					    	}
+					    	
+					    	this.updateRenderComponent();
+					    }
+					   
+					   Animation.prototype.updateRenderComponent = function(  )
+					   {
+					   	  	  var strScale="";
+					   	  	  	  if (this.scaleFlag=="yes")
+					   	  	  	  {
+					   	  	  	  	 strScale=" width="+this.gameObject.transform.scale.x+"  height="+this.gameObject.transform.scale.y+" ";
+					   	  	  	  }
+					   
+					   	  var str="<img border=0 src='"+this.src+"' "+strScale+" >";
+					   	  if (this.gameObject!=null)
+					   	  {
+						   	  var compObj=this.gameObject.getComponentByName("ComponentRendererHtml");
+						   	  if (compObj!=null)
+						   	  {
+						   	  	 // ok there is one
+						   	  	 compObj.html=""+str;
+					   		  }
+   					   	  }
+					   }
+					   
+					   Animation.prototype.editorHtml=function()
+					   {
+							var editorInspectorHtml="";
+							editorInspectorHtml=editorInspectorHtml+"For more than one animation add an AnimationController!";
+							editorInspectorHtml=editorInspectorHtml+this.getEditorInspectorFormHtml();
+							if (this.src!="") {	editorInspectorHtml=editorInspectorHtml+"<br><div style='overflow: auto'><a href='javascript:editorLinkVoid()'; onClick=\"var inspectorImg=document.getElementById('inspectorpicture"+this.id+"');  var formInspectorForm=document.forms['inspectorform'];  formInspectorForm.transform_scale_x.value=inspectorImg.width; formInspectorForm.transform_scale_y.value=inspectorImg.height;\">[GetSize]<br><img src='"+this.src+"' id='inspectorpicture"+this.id+"' border=1></a></div>"; }
+							return editorInspectorHtml;
+ 					   }
 					   
 
 			// DERIVED by ComponentRendererHtml
@@ -4394,14 +4744,32 @@
 		   ComponentCollider.prototype=new Component();
 		   ComponentCollider.prototype.name="ComponentCollider";
 		   ComponentCollider.prototype.type="collider";
-		   ComponentCollider.prototype.trigger="no"; // || trigger?
-		   ComponentCollider.prototype.label="stone"; // label
+		   ComponentCollider.prototype.label="solid"; // solid etc ...
 		   ComponentCollider.prototype.exposeEditorAttributes = function()
 		   {
-			  this.addEditorAttributeByValueAndDesc( "trigger", "string", "textfield", "yes or no (simple object) " );
 			  this.addEditorAttributeByValueAndDesc( "label", "string", "textfield", "differrent labels for different usage");
 		   }
 
+	/*
+		Mouse things
+	*/
+	function MouseFollower() { }
+		   MouseFollower.prototype=new Component();
+		   MouseFollower.prototype.name="MouseFollower";
+		   MouseFollower.prototype.type="behavior";
+		   MouseFollower.prototype.offsetX=0.0; 
+		   MouseFollower.prototype.offsetY=0.0; 
+		   MouseFollower.prototype.exposeEditorAttributes = function()
+		   {
+			  this.addEditorAttributeByValue( "offsetX", "float", "textfield" );
+			  this.addEditorAttributeByValue( "offsetY", "float", "textfield" );
+		   }
+		   MouseFollower.prototype.update = function()
+		   {
+		 	  this.gameObject.transform.position.x=input.mousePositionX+this.offsetX;
+		 	  this.gameObject.transform.position.y=input.mousePositionY+this.offsetY;
+		   }
+  
    /*
    		AssetObject
    */
@@ -4566,6 +4934,7 @@ function dump(arr,level) {
 	// used for editor
 	// gameEngineObj.registerComponent(new ComponentSceneEditorCameraRendererJQuery());
 	// [/editor]
+
 	
     // collider
 	gameEngineObj.registerComponent(new ComponentCollider());
@@ -4574,6 +4943,17 @@ function dump(arr,level) {
 	gameEngineObj.registerComponent(new ComponentCameraRendererJQuery());
 	gameEngineObj.registerComponent(new ComponentRendererHtml());
 	gameEngineObj.registerComponent(new ComponentImage());
+
+		// animations
+		gameEngineObj.registerComponent(new AnimationController());
+		gameEngineObj.registerComponent(new Animation());
+
+	// behaviors
+
+    // Mouse
+	gameEngineObj.registerComponent(new MouseFollower());
+	
+
 	// todo: registerComponent
 
 	// todo: add custom
@@ -4641,6 +5021,52 @@ function dump(arr,level) {
 		  	CharacterController.prototype.onCollision = function ( gameObj ) { destroyGameObject(gameObj);  }
 		gameEngineObj.registerComponent(new CharacterController());
 		
+				/*
+			CharacterControllerCollider
+		*/
+		// character controller can move around
+		// without bounds
+		function CharacterControllerCollider() { }
+		  	  CharacterControllerCollider.prototype=new Component();
+		  	  CharacterControllerCollider.prototype.name="CharacterControllerCollider";
+			  CharacterControllerCollider.prototype.type="behavior";
+			  CharacterControllerCollider.prototype.typeSub="";
+
+			  CharacterControllerCollider.prototype.stopOnLabel="every";
+			  
+			  CharacterControllerCollider.prototype.speed="2.0";
+			  
+			  CharacterControllerCollider.prototype.keyLeft="LEFT";
+			  CharacterControllerCollider.prototype.keyRight="RIGHT";
+			  CharacterControllerCollider.prototype.keyUp="UP";
+			  CharacterControllerCollider.prototype.keyDown="DOWN";
+			  // CharacterControllerCollider.prototype.keyFire=" ";
+	
+			  CharacterControllerCollider.prototype.exposeEditorAttributes = function()
+				{
+			  		this.addEditorAttributeByValue( "speed", "float", "textfield" );
+			  		this.addEditorAttributeByValueAndDesc( "keyLeft", "string", "textfield", "'every' or 'labelx'" );
+			  		this.addEditorAttributeByValue( "keyRight", "string", "textfield" );
+			  		this.addEditorAttributeByValue( "keyUp", "string", "textfield" );
+			  		this.addEditorAttributeByValue( "keyDown", "string", "textfield" );
+			  		
+			  		this.addEditorAttributeByValue( "label", "string", "textfield" );
+			  		
+			  		// this.addEditorAttributeByValue( "keyFire", "string", "textfield" );
+			   }
+			  CharacterControllerCollider.prototype.start=function() { /* this.console("","CharacterControllerCollider.START"); */ } 
+		  	  CharacterControllerCollider.prototype.update=function() 
+		  	  { 
+		  	  	var speed=this.speed; 
+		  	  	if (input.getKey(this.keyUp)) { if (gameEngineObj.checkCollisionForLabelOffset(this.gameObject,"every",0, -speed)==null) this.gameObject.transform.translate(0.0,-speed,0.0); } 
+		  	  	if (input.getKey(this.keyDown)) { if (gameEngineObj.checkCollisionForLabelOffset(this.gameObject,"every",0, speed)==null) this.gameObject.transform.translate(0.0, speed,0.0); } 
+		  	  	if (input.getKey(this.keyLeft)) { if (gameEngineObj.checkCollisionForLabelOffset(this.gameObject,"every",-speed,0)==null) this.gameObject.transform.translate(-speed,0.0,0.0);  }  
+		  	  	if (input.getKey(this.keyRight)) { if (gameEngineObj.checkCollisionForLabelOffset(this.gameObject,"every",speed,0)==null) this.gameObject.transform.translate( speed,0.0,0.0); }  
+		  	  	
+		  	  	// this.console("","update() key:("+this.keyLeft+"/"+input.getKey(this.keyLeft)+")  ");
+		  	 }   
+		  	CharacterControllerCollider.prototype.onCollision = function ( gameObj ) {   }
+		gameEngineObj.registerComponent(new CharacterControllerCollider());
 		
 		
 		// ComponentMovementSinus: example use the attribute system for expose fields to 

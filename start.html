@@ -71,13 +71,14 @@
    {
    		// game engines
    		this.name="jComponentGameEngine";
-   		this.version=0.77;
+   		this.version=0.8;
    		this.jquery=true;
    		
    		// technical thread settings
    		this.intervalGraphic=1000/30;
    		this.intervalPosition=1000/30;
    		this.intervalUpdate=1000/30;
+		this.intervalUpdateCollision=1000/30;
 			this.intervalUpdateStop=false;
    		
    		// mode
@@ -169,6 +170,8 @@
    					// start thread here ...
    					this.loopGameComponentUpdateThread();
    					
+   					// start thread collision
+   					this.loopGameComponentUpdateCollisionThread();
    				}
    				
    				// stop scene
@@ -217,10 +220,6 @@
    			// 
    			// do the start events ...
    			// update etc ...
-   			
-   			// check collision
-   			// collision event
-   			this.collideEachGameObjects();
    		
    			// alert("loopGameComponentUpdate");
    			// this.console("system","ComponentLoop");
@@ -238,6 +237,65 @@
 				this.intervalUpdateStop=false;
 			}
    		}
+   					
+			
+	   			// Component update scene
+	   			// this.editorSceneGraphDivRecTree
+   				this.loopGameComponentUpdateRecursivly=function( gameobjectStart )
+   				{			
+   				
+				 	// ok object with parent 
+				 	var gameObjTmp;
+				 	var count=0;
+				 	for (var o=0;o<this.arrayGameobjects.length;o++)
+				 	{
+				 		 gameObjTmp=this.arrayGameobjects[o];
+				 		 if (gameObjTmp.parent==gameobjectStart)
+				 		 {
+				 		 	// do the upate
+				 		 	gameObjTmp.update();
+				 		 		
+				 		 	// update Components
+				 		 	// do update here !!
+				 		 	
+								var compTmp;
+								var arrComp=gameObjTmp.getAllComponent();
+								for (var a=0;a<arrComp.length;a++)
+								{
+									compTmp=arrComp[a];
+									if (compTmp.active) compTmp.update();
+								}
+								
+							// go on here with the children ...
+							this.loopGameComponentUpdateRecursivly(gameObjTmp);
+				 		 }
+				 	}
+   				}  
+   				
+   		// Thread Collision
+   		this.loopGameComponentUpdateCollisionThread= function()
+   		{
+   			// 
+   			// do the start events ...
+   			// update etc ...
+   			
+   			// check collision
+   			// collision event
+   			this.collideEachGameObjects();
+   		
+   		// set time out here ..
+   			var thisGameEngineObj=this;
+   			
+   			if (!this.intervalUpdateStop)
+   			{
+   				setTimeout(function() { thisGameEngineObj.loopGameComponentUpdateCollisionThread(); }, this.intervalUpdateCollision);
+   			}
+			else
+			{
+				this.intervalUpdateStop=false;
+			}
+   		}
+   		
    					/*
    					
    						Collision Detection
@@ -255,7 +313,7 @@
 							// this.console("","collideEachGameObjects()");
 							var gameObjA;
 							var gameObjB;
-							for (var o=0;o<this.arrayGameobjects.length;o++)
+							for (var o=0;o<(this.arrayGameobjects.length/2+1);o++)
 						 	{
 						 		gameObjA=this.arrayGameobjects[o];
 						 		if (gameObjA.active)
@@ -337,41 +395,6 @@
 									}
 								}
 							}
-			
-	   			// Component update scene
-	   			// this.editorSceneGraphDivRecTree
-   				this.loopGameComponentUpdateRecursivly=function( gameobjectStart )
-   				{			
-   				
-				 	// ok object with parent 
-				 	var gameObjTmp;
-				 	var count=0;
-				 	for (var o=0;o<this.arrayGameobjects.length;o++)
-				 	{
-				 		 gameObjTmp=this.arrayGameobjects[o];
-				 		 if (gameObjTmp.parent==gameobjectStart)
-				 		 {
-				 		 	// do the upate
-				 		 	gameObjTmp.update();
-				 		 		
-				 		 	// update Components
-				 		 	// do update here !!
-				 		 	
-								var compTmp;
-								var arrComp=gameObjTmp.getAllComponent();
-								for (var a=0;a<arrComp.length;a++)
-								{
-									compTmp=arrComp[a];
-									if (compTmp.active) compTmp.update();
-								}
-								
-							// go on here with the children ...
-							this.loopGameComponentUpdateRecursivly(gameObjTmp);
-				 		 }
-				 	}
-   				}  
-   				
-   					
 		
    		
    		// Thread Position
@@ -740,6 +763,11 @@
 			// editor 
 			this.editorStoreAssetsAndActualScene = function()
 			{
+				// stop if game is running
+				
+				
+				
+				
 				// store assets
 				this.editorProjectStoreAssets();
 	
@@ -905,6 +933,12 @@
    			// save the actual scene
    			var tempScript=this.getScriptScene();
    			this.editorStoreSceneTemp(tempScript);
+   			
+   			// debind
+   			input.stop();
+   			
+   			// bind
+   			input.start();
 
 			// start thread   
 			this.startScene();
@@ -920,6 +954,9 @@
    		this.editorStopGame = function()
    		{
    			this.console("","editorStopGame()");
+   			
+   			// stop input
+   			input.stop();
    			
    			// stop thread                                     
    			this.stopScene();
@@ -989,7 +1026,7 @@
    			// editor
    			this.getEditorHead = function()
    			{
-   				var html="<div class='editorDivjComponentGameEngineHead' ><a href='javascript:editorLinkVoid()'; onClick=\"$('#divGameEngineEditor').toggle();\">jComponentGameEngine "+this.version+" ></a><div style='float:right; padding-left: 5px; padding-right: 5px; background: #888888'><a href='javascript: editorLinkVoid()' onClick='gameEngineObj.editorSceneSave();document.location.reload();' style='background: none; color: black; '>store & reload</a></div></div></div>";	
+   				var html="<div class='editorDivjComponentGameEngineHead' ><a href='javascript:editorLinkVoid()'; onClick=\"$('#divGameEngineEditor').toggle();\">jComponentGameEngine "+this.version+" ></a><div style='float:right; padding-left: 5px; padding-right: 5px; background: #888888'><a href='javascript: editorLinkVoid()' onClick='/* gameEngineObj.editorStopGame(); */ /* gameEngineObj.editorSceneSave(); */ document.location.reload();' style='background: none; color: black; '>reload</a></div></div></div>";	
    				return html;
    			}
    			
@@ -2460,6 +2497,75 @@
    		}
    	}
    	
+   	/*
+   		
+   		Input-Manager
+   	
+   	*/
+   	var InputManager = function()
+   	{
+   		// prevent
+   		this.prevent=false;
+   		
+   		// simple
+   		this.arrKeysName=new Array();
+   		this.arrKeysStatus=new Array();
+   		
+   		// start manager
+   		this.start = function()
+   		{
+   			for (var z=0;z<255;z++) { this.arrKeysStatus[z]=false;  this.arrKeysName[z]=""+String.fromCharCode(z); }
+   			
+   			// add listener
+   			// $(window).bind('keypress',function (event) { input.setKey(event.which,true);   if (this.prevent) event.preventDefault();   } );
+
+   			// redirect: do this as an event in the gameengine
+   			$(window).bind('keydown',function (event) { input.setKey(event.which,true);  var chc=event.charCode; console("","keydown: "+event.keyCode+","+event.which+"-"+event.charCode+" ("+chc+","+String.fromCharCode(event.keyCode)+") )");   if (this.prevent) event.preventDefault();   } );
+   			$(window).bind('keyup',function (event) { input.setKey(event.which,false);  if (this.prevent)   event.preventDefault();   } );
+		}
+   		
+   			// setKey
+   			this.setKey = function( keyIndex, keyStatus)
+   			{
+   				if (keyIndex>0)
+   				{
+   					// console("","setKey("+keyIndex+","+keyStatus+") ");
+   					this.arrKeysStatus[keyIndex]=keyStatus;
+   				}
+   			}
+   			
+   			this.getKey = function( keyName )
+   			{
+   				var keyCode=keyName.charCodeAt(0);
+   				
+   				// console("","getKey("+keyName+","+keyCode+") ");
+   				
+   				// special keynames like arrows!
+   				if (keyName=="LEFT") keyCode=37;
+   				if (keyName=="UP") keyCode=38;
+   				if (keyName=="RIGHT") keyCode=39;
+   				if (keyName=="DOWN") keyCode=40;
+   				if (keyName=="SPACE") keyCode=32;
+   				
+   				return this.getKeyCode(keyCode);
+   			}	
+   			
+   			this.getKeyCode = function( keyCode )
+   			{
+   				return this.arrKeysStatus[keyCode];
+   			}	
+   		
+   		// stop manager
+   		this.stop = function()
+   		{
+   			// deactivate listener
+   			$(window).unbind('keypress');
+   			
+   			$(window).unbind('keydown');
+   			$(window).unbind('keyup');
+   		}
+   	
+   	}
    	
    
    /*
@@ -2693,7 +2799,7 @@
    		this.start = function () { /*  this.console("","start()"); */ }
    		this.update = function () { /* this.console("","update()");  */}
    		
-   		this.onCollision = function ( gameObj ) {  this.console("",this.name+".onCollision("+gameObj.name+")");  }
+   		this.onCollision = function ( gameObj ) { /* this.console("",this.name+".onCollision("+gameObj.name+")"); */  }
    		
    		// delete
    		this.delete = function ()
@@ -3234,7 +3340,7 @@
    		// onMouseExit
    		// onMouseDown
 		// onCollision
-
+		this.onCollision = function( gameObj ) { /* this.console("",this.name+".onCollision("+gameObj.name+")");  */ }
    		
    		// getscript
 		this.getScript = function()
@@ -4115,7 +4221,7 @@
 		  	   // version 2: use attribute system
 		  	ComponentRendererHtml.prototype.exposeEditorAttributes = function()
 			{
-			  	console("","ComponentRendererHtml.exposeEditorAttributes(alpha)");
+			  	// console("","ComponentRendererHtml.exposeEditorAttributes(alpha)");
 			   // this.resetEditorAttributes();
 			   this.addEditorAttributeByValue( "alpha", "float", "textfield" );
 			   this.addEditorAttributeByValueAndDesc( "divName", "string", "textfield", "'auto' or wished unique divName" );
@@ -4288,7 +4394,14 @@
 		   ComponentCollider.prototype=new Component();
 		   ComponentCollider.prototype.name="ComponentCollider";
 		   ComponentCollider.prototype.type="collider";
-		  
+		   ComponentCollider.prototype.trigger="no"; // || trigger?
+		   ComponentCollider.prototype.label="stone"; // label
+		   ComponentCollider.prototype.exposeEditorAttributes = function()
+		   {
+			  this.addEditorAttributeByValueAndDesc( "trigger", "string", "textfield", "yes or no (simple object) " );
+			  this.addEditorAttributeByValueAndDesc( "label", "string", "textfield", "differrent labels for different usage");
+		   }
+
    /*
    		AssetObject
    */
@@ -4355,7 +4468,11 @@
   
   	  // use collision detection on the base of collider
   	  gameEngineObj.setCollisionDetection(new CollisionDetection());
-  
+  	  
+  	  // add input manager
+  	  var input=new InputManager();
+  	  	  input.start();
+  	  
   
   	  // editor prefs
 	  var editorObj=new GameObject();
@@ -4468,8 +4585,62 @@ function dump(arr,level) {
 			  ComponentCustom.prototype.type="behavior";
 			  ComponentCustom.prototype.typeSub="";
 			  ComponentCustom.prototype.start=function() {  this.console("","COMPONENTCUSTOM.START"); } 
-		  	  ComponentCustom.prototype.update=function() { this.gameObject.transform.translate(1.0,0.0,0.0); /* this.gameObject.transform.localPosition.x=this.gameObject.transform.localPosition.x+1; */ }   
+		  	  ComponentCustom.prototype.update=function() 
+		  	  { 
+		  	  	// this.console(""," key down: "+input.getKey("w")+"---"+input.getKeyCode(65)); 
+		  	  	var speed=1.8; 
+		  	  	if (input.getKeyCode(87)) { this.gameObject.transform.translate(0.0,-speed,0.0); } 
+		  	  	if (input.getKeyCode(83)) { this.gameObject.transform.translate(0.0, speed,0.0); } 
+		  	  	if (input.getKeyCode(65)) { this.gameObject.transform.translate(-speed,0.0,0.0); }  
+		  	  	if (input.getKeyCode(68)) { this.gameObject.transform.translate( speed,0.0,0.0); }  
+		  	  	/* this.gameObject.transform.translate(1.0,0.0,0.0); */ /* this.gameObject.transform.localPosition.x=this.gameObject.transform.localPosition.x+1; */ 
+		  	 }   
+		  	ComponentCustom.prototype.onCollision = function ( gameObj ) { destroyGameObject(gameObj);  }
 		gameEngineObj.registerComponent(new ComponentCustom());
+		
+		
+		/*
+			CharacterController
+		*/
+		// character controller can move around
+		// without bounds
+		function CharacterController() { }
+		  	  CharacterController.prototype=new Component();
+		  	  CharacterController.prototype.name="CharacterController";
+			  CharacterController.prototype.type="behavior";
+			  CharacterController.prototype.typeSub="";
+			  
+			  CharacterController.prototype.speed="2.0";
+			  
+			  CharacterController.prototype.keyLeft="LEFT";
+			  CharacterController.prototype.keyRight="RIGHT";
+			  CharacterController.prototype.keyUp="UP";
+			  CharacterController.prototype.keyDown="DOWN";
+			  // CharacterController.prototype.keyFire=" ";
+	
+			  CharacterController.prototype.exposeEditorAttributes = function()
+				{
+			  		this.addEditorAttributeByValue( "speed", "float", "textfield" );
+			  		this.addEditorAttributeByValueAndDesc( "keyLeft", "string", "textfield", "Use big letters like A,W,S,D or LEFT, RIGHT .. SPACE" );
+			  		this.addEditorAttributeByValue( "keyRight", "string", "textfield" );
+			  		this.addEditorAttributeByValue( "keyUp", "string", "textfield" );
+			  		this.addEditorAttributeByValue( "keyDown", "string", "textfield" );
+			  		// this.addEditorAttributeByValue( "keyFire", "string", "textfield" );
+			   }
+			  CharacterController.prototype.start=function() { /* this.console("","CharacterController.START"); */ } 
+		  	  CharacterController.prototype.update=function() 
+		  	  { 
+		  	  	var speed=this.speed; 
+		  	  	if (input.getKey(this.keyUp)) { this.gameObject.transform.translate(0.0,-speed,0.0); } 
+		  	  	if (input.getKey(this.keyDown)) { this.gameObject.transform.translate(0.0, speed,0.0); } 
+		  	  	if (input.getKey(this.keyLeft)) { this.gameObject.transform.translate(-speed,0.0,0.0); }  
+		  	  	if (input.getKey(this.keyRight)) { this.gameObject.transform.translate( speed,0.0,0.0); }  
+		  	  	
+		  	  	// this.console("","update() key:("+this.keyLeft+"/"+input.getKey(this.keyLeft)+")  ");
+		  	 }   
+		  	CharacterController.prototype.onCollision = function ( gameObj ) { destroyGameObject(gameObj);  }
+		gameEngineObj.registerComponent(new CharacterController());
+		
 		
 		
 		// ComponentMovementSinus: example use the attribute system for expose fields to 

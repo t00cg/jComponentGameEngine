@@ -2,7 +2,7 @@
 <html>
   <head>
     <meta charset="utf-8">
-    <title>jComponentGameEngine - Engine & Editor - Code, design levels and play in Javascript&jQuery!</title>
+    <title>jComponentGameEngine - Engine&Editor-HTMLApp - Code, design levels and play in Javascript&jQuery!</title>
   </head>
   <body onResize="gameEngineObj.editorAdaptScreenPosition();" onLoad="gameEngineObj.editorAdaptScreenPosition();">
   	
@@ -66,12 +66,22 @@
      <!-- _script src="jcomponentgameengine-0.1.js" /> -->
      
      <script>
+
+	/*
+		Editor
+	*/
+	function editorLinkVoid()
+	{
+		// return true;
+	}
+
+
         // GameEngine
    var jComponentGameEngine = function( )
    {
    		// game engines
    		this.name="jComponentGameEngine";
-   		this.version=0.87;
+   		this.version=0.92;
    		this.jquery=true;
    		
    		// technical thread settings
@@ -83,7 +93,10 @@
    		
    		// mode
    		this.mode="editor"; // game
-   		this.modeSub=""; // play|pause   		
+   		this.modeSub=""; // play|pause   	
+   		
+   		// logMode - display errors etc in which channel?
+   		this.logMode="browser"; // ['none','editor','browser'] 'disable' or 'editor': editor system or 'browser' of the browser
    		
    		// todo: subtodo - system?
    		
@@ -131,7 +144,7 @@
    		*/
    		this.startGame = function()
    		{
-   			this.console("","startGame()");
+   			this.log("","startGame()");
    			
    			this.setSystem("game","");
    			
@@ -223,7 +236,7 @@
    			// update etc ...
    		
    			// alert("loopGameComponentUpdate");
-   			// this.console("system","ComponentLoop");
+   			// this.log("system","ComponentLoop");
    			this.loopGameComponentUpdateRecursivly(this.sceneGraph);
    			
    			// set time out here ..
@@ -311,7 +324,7 @@
 					{
 						if (this.collisionDetection!=null)
 						{
-							// this.console("","collideEachGameObjects()");
+							// this.log("","collideEachGameObjects()");
 							var gameObjA;
 							var gameObjB;
 							for (var o=0;o<(this.arrayGameobjects.length/2+1);o++)
@@ -338,7 +351,7 @@
 											{
 												if (gameObjA.transform.position.x<(gameObjB.transform.position.x+gameObjB.transform.scale.x))
 												{
-													// this.console("","  collisionX("+gameObjA.name+","+gameObjB.name+") ");
+													// this.log("","  collisionX("+gameObjA.name+","+gameObjB.name+") ");
 													matchX=true;
 												}
 											}
@@ -346,13 +359,13 @@
 											{
 												if (gameObjA.transform.position.y<(gameObjB.transform.position.y+gameObjB.transform.scale.y))
 												{
-													// this.console("","  collisionY("+gameObjA.name+","+gameObjB.name+") ");
+													// this.log("","  collisionY("+gameObjA.name+","+gameObjB.name+") ");
 													matchY=true;
 												}
 											}
 											if ((matchX)&&(matchY))
 											{
-												this.console("","  collision("+gameObjA.name+","+gameObjB.name+") ");
+												this.log("","  collision("+gameObjA.name+","+gameObjB.name+") ");
 											}
 					 					*/
 					 				
@@ -361,7 +374,7 @@
 					 					var collisionFlag=this.collisionDetection.checkCollision(gameObjA,gameObjB);
 					 					if (collisionFlag)
 					 					{
-											// this.console("","this.doOnCollisionOnGameObject("+gameObjA.name+"("+gameObjA.transform.position.y+"-"+gameObjA.transform.scale.y+"),"+gameObjB.name+"("+gameObjB.transform.position.y+"));"+collisionFlag);
+											// this.log("","this.doOnCollisionOnGameObject("+gameObjA.name+"("+gameObjA.transform.position.y+"-"+gameObjA.transform.scale.y+"),"+gameObjB.name+"("+gameObjB.transform.position.y+"));"+collisionFlag);
 											this.doOnCollisionOnGameObject(gameObjA,gameObjB);
 											if (!gameObjB.active)
 											{
@@ -464,7 +477,7 @@
    			// go through all an search for specific things ..
    			
    			// alert("loopGamePositionUpdate");
-   			// this.console("system","PositionLoop");
+   			// this.log("system","PositionLoop");
    			this.loopGamePositionUpdateDoRendererRecursivly(this.sceneGraph);
    			
    			// set time out here ..
@@ -512,7 +525,7 @@
    			// go through all an search for specific things ..
    			
    			// alert("loopGameGraphicUpdate");
-   			// this.console("system","graphicLoop");
+   			// this.log("system","graphicLoop");
    			this.loopGameGraphicUpdateDoRendererRecursivly(this.sceneGraph);
    			
    			// set time out here ..
@@ -535,7 +548,7 @@
 				 		 {
 				 		 	if (gameObjTmp.active)
 						 	{
-						 		// console("system","cameraFound "+gameObjTmp.name);
+						 		// log("system","cameraFound "+gameObjTmp.name);
 
 						 	    // search for camera component!
 						 	    // do the renderings 
@@ -545,7 +558,7 @@
 								{
 
 									// found render there!!!
-									// console("system","cameraFound"+gameObjTmp.name);
+									// log("system","cameraFound"+gameObjTmp.name);
 								
 									
 									// ...
@@ -558,7 +571,7 @@
 										cameraCompontent.updateGraphic( this.sceneGraph, this.arrayGameobjects );
 										
 										// todo - problem divs not unique!
-										// this.console("","loopGameGraphicUpdateDoRendererRecursivly("+gameObjTmp.name+")");
+										// this.log("","loopGameGraphicUpdateDoRendererRecursivly("+gameObjTmp.name+")");
 									//}
 									//catch( e )
 									//{
@@ -642,7 +655,7 @@
    		this.start = function()
    		{
    			// alert("start up");
-   			this.console("system","this.start() {");
+   			this.log("system","this.start() {");
    			
    			// add a debug window in 
 			if (this.jquery)
@@ -658,8 +671,9 @@
 					{
 						this.editorFirstStartUp=this.editorStorage.checkFirstStartUp();
 						// first start up
-// todo: fix for firefox
-// alert("editorFirstStartUp"+this.editorFirstStartUp);						
+// todo: fix for firefox mac?
+// alert("editorFirstStartUp"+this.editorFirstStartUp);		
+// this.editorFirstStartUp=false;
 					}
    					
 					// divs etc
@@ -745,7 +759,7 @@
 			this.loopGameGraphicUpdateThread();
 
 			// debug
-			this.console("system","this.start() }");
+			this.log("system","this.start() }");
 
    		}
    		
@@ -791,7 +805,7 @@
    			var windowWidth=$(window).width();
    			var windowHeight=$(window).height();
    			
-   			this.console("","editorAdaptScreenPosition("+windowWidth+","+windowHeight+")");
+   			this.log("","editorAdaptScreenPosition("+windowWidth+","+windowHeight+")");
    			
    			// editor set position
    			$("#divGameEngineContainer").css("left",(windowWidth-420));
@@ -835,7 +849,7 @@
 				var scriptScene=this.getScriptScene();
 				this.editorStorage.storeScene( this.actualProject, this.actualScene, scriptScene );
 				
-				this.console("","stored assets and actual scene");
+				this.log("","stored assets and actual scene");
 			
 	  		    // update   		   
 	   			this.editorDoTheUpdate();
@@ -850,7 +864,7 @@
    			this.editorStoreAssetsAndActualScene();
    	
    			// done
-   			this.console("","stored actual scene");
+   			this.log("","stored actual scene");
 
 			// update   		   
    			this.editorDoTheUpdate();
@@ -879,7 +893,7 @@
 				this.editorDoTheUpdate();
 	
 				// done
-				this.console("","stored as "+strNewname+" actual scene");
+				this.log("","stored as "+strNewname+" actual scene");
 			}
    		}
 
@@ -948,7 +962,7 @@
 			this.editorDoTheUpdate();
 	
 			// done
-			this.console("","new startscene set for editor and game "+strName+"");
+			this.log("","new startscene set for editor and game "+strName+"");
    			
    		}
    		
@@ -974,7 +988,7 @@
 			this.editorDoTheUpdate();
 	
 			// done
-			this.console("","removed scene "+strNameRemove+"");
+			this.log("","removed scene "+strNameRemove+"");
    		}
    		
    		/*
@@ -985,7 +999,7 @@
    		this.editorStartGame = function()
    		{
    			
-   			this.console("","editorStartGame()");
+   			this.log("","editorStartGame()");
 
 			// store assets   			
    			this.editorProjectStoreAssets();
@@ -1019,7 +1033,7 @@
 		// store and load game
    		this.editorStopGame = function()
    		{
-   			this.console("","editorStopGame()");
+   			this.log("","editorStopGame()");
    			
    			// stop input
    			input.stop();
@@ -1057,35 +1071,59 @@
    		/*
    			GameEngine: CONSOLE
    		*/
-   		this.console = function(area,msg)
+   		this.log = function(area,msg)
    		{
 	   		// alert("console2("+area+","+msg+")");
-   			this.consoleExtended(area,"message",msg);
+   			this.logExtended(area,"message",msg);
    		}
    		
    		this.warning = function(area,msg)
    		{
-   			this.consoleExtended(area,"warning",msg);
+   			this.logExtended(area,"warning",msg);
    		}
    		
    		this.error = function(area,msg)
    		{
-   			this.consoleExtended(area,"error",msg);
+   			this.logExtended(area,"error",msg);
    		}
    		
 			// extended
-			this.consoleExtended = function(area, level,msg)
+			this.logExtended = function(area, level,msg)
 			{
 				// alert("console3("+area+","+level+","+msg+")");
-	
-				var newMsg=new ConsoleMessage(area,level,msg);
 				
-				// disable editor!
-				// todo: into database?
-				this.arrConsole[this.arrConsole.length]=newMsg;
+				// editor
+				if (this.logMode=="editor")
+				{
+					var newMsg=new ConsoleMessage(area,level,msg);
 				
-				// update console
-				this.editorConsoleDoTheUpdate();
+					// disable editor!
+					// todo: into database?
+					this.arrConsole[this.arrConsole.length]=newMsg;
+				
+					// update console
+					this.editorConsoleDoTheUpdate();
+				}
+
+				// browser console
+				if (this.logMode=="browser")
+				{
+					if (console)
+					{
+						if (level=="message") console.log("jComponentGameEngine: "+area+":"+msg);
+						if (level=="warning") console.warning("jComponentGameEngine: "+area+":"+msg);
+						if (level=="error") console.error("jComponentGameEngine: "+area+":"+msg);
+					}
+					else
+					{
+						// console not accessable
+						this.logMode="editor";
+						this.error("could not find a console to pipe to - use internal system! ");
+					}
+				}
+				
+				// disable
+				// do nothing
 			}	
 			
 			// clear it!
@@ -1116,6 +1154,15 @@
    				if (!this.editorStorage.working)
    				{
    					html=html+"<div class='editorAttentionNoStoragePossiblity'>ATTENTION: This is application stores the data to your localBrowser-Storage. But your Browser doesn't seem to be able to store this. So change Browser or Update-Browser or use manually the export function!</div>";
+   				}
+   				
+   				// todo: problem firefox and local
+   				if (navigator.userAgent.toLowerCase().indexOf('firefox')!=-1)
+   				{
+	   				if ((""+document.location.href).indexOf("file://")==0)
+   					{
+   						html=html+"<div class='editorAttentionNoStoragePossiblity'>You have a firefox-browser. This browser can't store if the site is local file://. This is a stupid bug (how it's possible to make html-apps?)! So beware! The settings and levels will be lost, if you reload the browser! Export before! Or copy this site to the web - there it works! But hey: we want to have a html-app!</div>";
+   					}
    				}
   
 					// load and save
@@ -1403,9 +1450,25 @@
    			/*
    				Editor: console
    			*/
-   			this.editorConsoleDiv=function()
+   			this.editorConsoleDiv = function()
    			{
    				var html="";
+   				
+   				html=html+"You can change the logging also to browser-console: Change logMode to 'browser' (gameEngineObj.logMode='browser';) or disable (gameEngineObj.logMode='none';)";
+   				// look here
+   				if (this.logMode=="editor") 
+   				{
+   				}
+   				else
+   				if (this.logMode=="browser") 
+   				{
+   					html=html+"<br><br><strong>Logging is visible in the browser-console.</strong>";
+   				}
+   				else
+   				{
+   					html=html+"<br><br><strong>Logging is disabled.</strong>";
+   				}
+   				
    				
    				// show the last 15 messages here  
    				breakAmount=15;
@@ -1653,7 +1716,7 @@
    				{
    					// delete it!
    					this.deleteGameObject( gameObj );
-   					this.console("","delete the gameobject "+gameObj.name);
+   					this.log("","delete the gameobject "+gameObj.name);
 
    					// udate it ..
    					this.editorSceneGraphDoTheUpdate();  
@@ -1919,7 +1982,7 @@
    					this.editorDoTheUpdate();
 					  
 					// console
-   					this.console("editor","updateObject("+this.editorActualObject.name+")");
+   					this.log("editor","updateObject("+this.editorActualObject.name+")");
    				}  
    			}
    			
@@ -2136,7 +2199,7 @@
    			gameobjectObject.id=this.gameobjectId;
 
 			// add to console!!! 
-   			this.console("system","this.addGameObject("+gameobjectObject.name+") }");
+   			this.log("system","this.addGameObject("+gameobjectObject.name+") }");
    			
    			this.editorDoTheUpdate();
    		}
@@ -2154,7 +2217,7 @@
    		this.attachToParent = function( gameobjectObject, gameobjectParent )
    		{
    			// alert("addGameObjectToRoot");
-   			this.console("debug","attachToParent("+gameobjectObject.name+")");
+   			this.log("debug","attachToParent("+gameobjectObject.name+")");
  			if (!this.gameobjectExists(gameobjectObject))
  			{
  				// add here 
@@ -2247,7 +2310,7 @@
 				}
 			}
 			
-			this.console("debug","this.getGameObjectIndex().notfound");
+			this.log("debug","this.getGameObjectIndex().notfound");
 			return -1;
 		}
 		
@@ -2266,7 +2329,7 @@
 				}
 			}
 			
-			this.console("debug","this.gameobjectExists().notfound");
+			this.log("debug","this.gameobjectExists().notfound");
 			return false;
 		}
 		
@@ -2338,7 +2401,7 @@
    		// add an asset
    		this.addAsset = function( assetObject )
    		{
-   				// this.console("","addedAsset: "+assetObject.name);
+   				// this.log("","addedAsset: "+assetObject.name);
    				// todo: otherwise use defaults
    				// if (assetObject.id==-1) 
    				assetObject.id=this.assetId;
@@ -2455,7 +2518,7 @@
    		{
    			   	if (assetObj!=null)
    				{
-	   				this.console("","creatObjectFromAsset("+assetObj.name+"  "+assetObj.entity+")");
+	   				this.log("","creatObjectFromAsset("+assetObj.name+"  "+assetObj.entity+")");
 
 	   				// differen type?
 	   				if (assetObj.type=="GameObject")
@@ -2490,7 +2553,7 @@
    		// registerComponent
    		this.registerComponent = function( componentObj )
    		{
-   			this.console("","registerComponent("+componentObj.name+")");
+   			this.log("","registerComponent("+componentObj.name+")");
    			
    			// do the exposes 
    			componentObj.exposeEditorAttributes();
@@ -2532,12 +2595,12 @@
    			var compObj=gameObjectA.getComponentByName("ComponentCollider");
    			if (compObj==null)
    			{
-   				// gameObjectA.console("","validate(): false");
+   				// gameObjectA.log("","validate(): false");
    				return false;
    			}
    			else
    			{
-   				// gameObjectA.console("","validate(): true");
+   				// gameObjectA.log("","validate(): true");
    				return true;
    			}
    			
@@ -2604,17 +2667,18 @@
    			// $(window).bind('keypress',function (event) { input.setKey(event.which,true);   if (this.prevent) event.preventDefault();   } );
 
    			// redirect: do this as an event in the gameengine
-   			$(window).bind('keydown',function (event) { input.setKey(event.which,true);  var chc=event.charCode; console("","keydown: "+event.keyCode+","+event.which+"-"+event.charCode+" ("+chc+","+String.fromCharCode(event.keyCode)+") )");   if (this.prevent) event.preventDefault();   } );
+   			$(window).bind('keydown',function (event) { input.setKey(event.which,true);  var chc=event.charCode; if (this.prevent) event.preventDefault();   } );
    			$(window).bind('keyup',function (event) { input.setKey(event.which,false);  if (this.prevent)   event.preventDefault();   } );
 		
 			// mouse 
 			$(window).bind('mousemove',function (event) { input.mousePositionX=event.pageX; input.mousePositionY=event.pageY; if (this.prevent) event.preventDefault(); } );
 			// do also the check for mouse down / up in the sceneGraph
 
-//			$(window).bind('click',function (event) { this.console("","click here and now .."); /* gameEngineObj.inputDoEvent(); */ if (this.prevent) event.preventDefault(); } );
+			
 			// mouse down and up
-			$(window).bind('mousedown',function (event) { this.console("","mousedown: click here and now .."); /* gameEngineObj.inputDoMouseDownEvent(); */ if (this.prevent) event.preventDefault(); } );
-			$(window).bind('mouseup',function (event) { this.console("","mouseup: click here and now .."); /* gameEngineObj.inputDoMouseUpEvent(); */ if (this.prevent) event.preventDefault(); } );
+			// $(window).bind('click',function (event) { log("","click here and now .."); /* gameEngineObj.inputDoEvent(); */ if (this.prevent) event.preventDefault(); } );			
+//			$(window).bind('mousedown',function (event) { log("","mousedown: click here and now .."); /* gameEngineObj.inputDoMouseDownEvent(); */ if (this.prevent) event.preventDefault(); } );
+//			$(window).bind('mouseup',function (event) { log("","mouseup: click here and now .."); /* gameEngineObj.inputDoMouseUpEvent(); */ if (this.prevent) event.preventDefault(); } );
 		}
    		
    			// setKey
@@ -2622,7 +2686,7 @@
    			{
    				if (keyIndex>0)
    				{
-   					// console("","setKey("+keyIndex+","+keyStatus+") ");
+   					// log("","setKey("+keyIndex+","+keyStatus+") ");
    					this.arrKeysStatus[keyIndex]=keyStatus;
    				}
    			}
@@ -2631,7 +2695,7 @@
    			{
    				var keyCode=keyName.charCodeAt(0);
    				
-   				// console("","getKey("+keyName+","+keyCode+") ");
+   				// log("","getKey("+keyName+","+keyCode+") ");
    				
    				// special keynames like arrows!
    				if (keyName=="LEFT") keyCode=37;
@@ -2678,6 +2742,10 @@
    		// problem with firefox and local files!
    		this.start = function() 
    		{
+   			// some question if there is localStorage
+   			if (typeof(localStorage) == 'undefined' ) {  this.working=false; return this.working;   } 
+   			if (localStorage) { } else { this.working=false; return this.working; }
+   		
    			try { localStorage.setItem(this.prefix+".Check","true"); } catch ( e ) { alert("problem!"+e); this.working=false; }
    			
 			if (this.working)
@@ -2692,7 +2760,7 @@
    		// checkFirstStartUp
    		this.checkFirstStartUp = function()
    		{
-   		
+// return true;   		
    			// simple is a property set, if not 
    			var strFirstStartup=localStorage.getItem(this.prefix+".startup");
 // todo: alert("checkFirstStartUp: "+strFirstStartup);
@@ -2760,7 +2828,7 @@
 				this.generateSceneName =  function( projectName, sceneName )
 				{
 					var scenePath=""+this.generateSceneBase(projectName)+sceneName;
-					console("localStorage",scenePath);
+				 log("localStorage",scenePath);
 					return scenePath;
 				}
 	
@@ -2801,7 +2869,7 @@
 						{
 							var sceneName=""+key.substring((""+this.generateSceneBase(projectName)).length);
 							allScenesNames[allScenesNames.length]=sceneName;
-							// console("",t+" SceneStoredFound * "+projectName);					
+							// log("",t+" SceneStoredFound * "+projectName);					
 						}
 						
 						// alert(t+"  "+key+"" +localStorage.getItem(key));
@@ -2890,12 +2958,12 @@
 		// if you would work with inheritage on GameObjects!
 		// default-way: component methods!
 		
-   		this.onLoad = function () { /*  this.console("","onLoad()");  */}
+   		this.onLoad = function () { /*  this.log("","onLoad()");  */}
 
-   		this.start = function () { /*  this.console("","start()"); */ }
-   		this.update = function () { /* this.console("","update()");  */}
+   		this.start = function () { /*  this.log("","start()"); */ }
+   		this.update = function () { /* this.log("","update()");  */}
    		
-   		this.onCollision = function ( gameObj ) { /* this.console("",this.name+".onCollision("+gameObj.name+")"); */  }
+   		this.onCollision = function ( gameObj ) { /* this.log("",this.name+".onCollision("+gameObj.name+")"); */  }
    		
    		// delete
    		this.delete = function ()
@@ -3188,14 +3256,14 @@
 		  GameObject: console 
 		  
 		 */
-		this.console = function(area,msg)
+		this.log = function(area,msg)
 		{
-			console(this.name+"."+area,msg);
+		 log(this.name+"."+area,msg);
 		}
 		// warning 
 		this.warning = function(area,msg)
 		{
-			console(this.name+"."+area,msg);
+			log(this.name+"."+area,msg);
 		}
 		this.error = function(area,msg)
 		{
@@ -3275,7 +3343,7 @@
 				if (this.gameObject.parent!=null)
    				{
    					var parentObj=this.gameObject.parent;
-   					//  this.console("",""+parentObj.name);
+   					//  this.log("",""+parentObj.name);
 	   				if (parentObj.parent==null)
 	   				{
    						// absolute
@@ -3353,7 +3421,7 @@
 	   			if (this.gameObject.parent!=null)
    				{
    					var parentObj=this.gameObject.parent;
-   					//  this.console("",""+parentObj.name);
+   					//  this.log("",""+parentObj.name);
 	   				if (parentObj.parent==null)
 	   				{
    						// absolute
@@ -3435,10 +3503,10 @@
    		*/
    		
    		// onLoad - add to the 
-		this.onLoad = function() { /* this.console("","onLoad()"); */ }
+		this.onLoad = function() { /* this.log("","onLoad()"); */ }
 		
    		// start - start in the game loop
-		this.start = function() { /* this.console("","start()"); */ }
+		this.start = function() { /* this.log("","start()"); */ }
 				
 		// update - game loop
 		this.update = function() { }
@@ -3453,7 +3521,7 @@
    		// onMouseExit
    		// onMouseDown
 		// onCollision
-		this.onCollision = function( gameObj ) { /* this.console("",this.name+".onCollision("+gameObj.name+")");  */ }
+		this.onCollision = function( gameObj ) { /* this.log("",this.name+".onCollision("+gameObj.name+")");  */ }
    		
    		// getscript
 		this.getScript = function()
@@ -3596,7 +3664,7 @@
    			{
    				editorAttr=this.arrEditorAttributes[t];
    				var strEvalValue="var evalValue=htmlformObject."+editorAttr.name+this.id+".value;";
-   				try {	eval(strEvalValue); this.console("","setEditorInspectorFormToData() : "+strEvalValue+"="+strEvalValue); } catch(e) { this.error("","setEditorInspectorFormToData - value - exception: "+e); }
+   				try {	eval(strEvalValue); this.log("","setEditorInspectorFormToData() : "+strEvalValue+"="+strEvalValue); } catch(e) { this.error("","setEditorInspectorFormToData - value - exception: "+e); }
 					// parse if int or float!
 					if (editorAttr.type=="int") evalValue=0+parseInt(evalValue);
 					if (editorAttr.type=="float") evalValue=0.0+parseFloat(evalValue);
@@ -3666,9 +3734,9 @@
    			Console & Warning 
    		
    		*/
-		this.console = function(area,msg)
+		this.log = function(area,msg)
 		{
-			this.gameObject.console(this.name+"."+area,msg);
+			this.gameObject.log(this.name+"."+area,msg);
 		}
 		// warning 
 		this.warning = function(area,msg)
@@ -3765,7 +3833,7 @@
 					
 						this.renderCounter=0;
 				
-						// this.console("updateGraphic","do");
+						// this.log("updateGraphic","do");
 	
 						// is there an existing div for the gameview
 						// create one?
@@ -3822,7 +3890,7 @@
 								$("#"+this.arrActualDivsToDelete[t]).remove();
 							}
 							
-							if (this.arrActualDivsToDelete.length>0) this.console("","Camera: Remove this divs: ("+this.arrActualDivsToDelete.length+") "+strRemoveDivs);
+							if (this.arrActualDivsToDelete.length>0) this.log("","Camera: Remove this divs: ("+this.arrActualDivsToDelete.length+") "+strRemoveDivs);
 							
 							// update here
 							this.arrActualDivsToDelete=this.arrActualDivs;
@@ -3837,7 +3905,7 @@
 					// simple
 				    ComponentSceneEditorCameraRendererJQuery.prototype.updateGraphicDivsRec=function( gameobjectStart, arrayGameobjects )
 					{
-						// this.console("updateGraphicDivsRec","----"+gameobjectStart.name+"-------- ");
+						// this.log("updateGraphicDivsRec","----"+gameobjectStart.name+"-------- ");
 
 						var gameObjTmp;
 						var count=0;
@@ -3851,13 +3919,13 @@
 				
 							 		var divName="divGameObj_"+this.renderToDivName+"_"+correctDivName+"_"+gameObjTmp.id;
 
-									// gameObjTmp.console("system","found "+gameObjTmp.name);
+									// gameObjTmp.log("system","found "+gameObjTmp.name);
 
 									// is there a render/html component?
 									var renderComponent=gameObjTmp.getFirstComponentByType("renderer","html");
 									if (renderComponent!=null)
 									{
-										// renderComponent.console("","foundType(render/html)");
+										// renderComponent.log("","foundType(render/html)");
 
 										// active component?
 										if (renderComponent.active)
@@ -3961,7 +4029,7 @@
 									if (arrGameEngineObject.length==0)
 									{
 										// Editor Position
-										$('#'+this.renderToDivName+"").append("<div id='"+divEditorStuffPosition+"' style='position: absolute;' class='editorMoveAndDescription'><a href='javascript:editorLinkVoid()'; id='"+divEditorStuffPosition+"Move'><img src='editor/position.png' border=0></a><div id='"+divEditorStuffPosition+"Objects' style='display:inline;'></div>");
+										$('#'+this.renderToDivName+"").append("<div id='"+divEditorStuffPosition+"' style='position: absolute;' class='editorMoveAndDescription'><a href='javascript:editorLinkVoid()'; ><img src='editor/position.png' id='"+divEditorStuffPosition+"Move' border=0></a><div id='"+divEditorStuffPosition+"Objects' style='display:inline;'></div>");
 											$("#"+divEditorStuffPosition).css("position","absolute");	
 											$("#"+divEditorStuffPosition).css("left",50);
 											$("#"+divEditorStuffPosition).css("top",50);
@@ -3973,9 +4041,19 @@
 										// knowhow
 										// $("#"+divEditorStuffPosition+"").bind('mousedown', { element: ""+gameObjTmp.id }, function(event) {  gameEngineObj.editorSetInspectorGameObjectById("+event.data.element+");  } );
 										
-										// move position 
+										// move icon and bindings ...
 										$("#"+divEditorStuffPosition+"Move").bind('mousedown', { element: ""+gameObjTmp.id }, function(event) {  gameEngineObj.editorSetInspectorGameObjectById(event.data.element);  } );
-										$("#"+divEditorStuffPosition+"Move").bind('drag', function(event) { /* console("","drag: ("+event.pageX+"/"+event.pageY+") "); */ /* bugfix for chrome and firefox: last event is (0,0)  */ var doDrag=true; if ((event.pageX==0)&&(event.pageY==0)) doDrag=false; if (doDrag) { var positionScrollSceneEditorX=$('#divSceneEditor').scrollLeft(); var positionScrollSceneEditorY=$('#divSceneEditor').scrollTop(); gameEngineObj.editorActualObject.transform.setPosition((positionScrollSceneEditorX+event.pageX),(positionScrollSceneEditorY+event.pageY),gameEngineObj.editorActualObject.transform.position.z); /* slow down update process */  if ((new Date()).getTime()%10==0) { gameEngineObj.editorInspectorDoTheUpdate(); } } /* event.preventDefault(); */  } );
+
+										// mouse move
+										// $(window).bind('mousemove', function(event) { /log(""," -- "+event.pageX+","+event.pageY); /* bugfix for chrome and firefox: last event is (0,0)  */ var doDrag=true; if ((event.pageX==0)&&(event.pageY==0)) doDrag=false; if (doDrag) { var positionScrollSceneEditorX=$('#divSceneEditor').scrollLeft(); var positionScrollSceneEditorY=$('#divSceneEditor').scrollTop(); gameEngineObj.editorActualObject.transform.setPosition((positionScrollSceneEditorX+event.pageX),(positionScrollSceneEditorY+event.pageY),gameEngineObj.editorActualObject.transform.position.z); /* slow down update process */ if (false) gameEngineObj.editorInspectorDoTheUpdate();  } /* event.preventDefault(); */  } );
+
+
+										// todo: works: etc / doesntwork: firefox (0,0)! no permanent update here
+										$("#"+divEditorStuffPosition+"Move").bind('drag', function(event) {  /* bugfix for chrome and firefox: last event is (0,0)  */ var doDrag=true; if ((event.pageX==0)&&(event.pageY==0)) doDrag=false; if (doDrag) { var positionScrollSceneEditorX=$('#divSceneEditor').scrollLeft(); var positionScrollSceneEditorY=$('#divSceneEditor').scrollTop(); gameEngineObj.editorActualObject.transform.setPosition((positionScrollSceneEditorX+event.pageX),(positionScrollSceneEditorY+event.pageY),gameEngineObj.editorActualObject.transform.position.z); /* slow down update process */  if ((new Date()).getTime()%10==0) {  gameEngineObj.editorInspectorDoTheUpdate(); } } /* event.preventDefault(); */  } );
+										// todo: works: etc / doesntwork: chrome (0,0)
+										$("#"+divEditorStuffPosition+"Move").bind('dragleave', function(event) { /* log(""," -- "+event.pageX+","+event.pageY); */ /* bugfix for chrome and firefox: last event is (0,0)  */ var doDrag=true; if ((event.pageX==0)&&(event.pageY==0)) doDrag=false; if (doDrag) { var positionScrollSceneEditorX=$('#divSceneEditor').scrollLeft(); var positionScrollSceneEditorY=$('#divSceneEditor').scrollTop(); gameEngineObj.editorActualObject.transform.setPosition((positionScrollSceneEditorX+event.pageX),(positionScrollSceneEditorY+event.pageY),gameEngineObj.editorActualObject.transform.position.z);  gameEngineObj.editorInspectorDoTheUpdate();  } /* event.preventDefault(); */  } );
+										// todo: works: etc / doesntwork: firefox (0,0)
+										// $("#"+divEditorStuffPosition+"Move").bind('dragend', function(event) {  /* bugfix for chrome and firefox: last event is (0,0)  */ var doDrag=true; if ((event.pageX==0)&&(event.pageY==0)) doDrag=false; if (doDrag) { var positionScrollSceneEditorX=$('#divSceneEditor').scrollLeft(); var positionScrollSceneEditorY=$('#divSceneEditor').scrollTop(); gameEngineObj.editorActualObject.transform.setPosition((positionScrollSceneEditorX+event.pageX),(positionScrollSceneEditorY+event.pageY),gameEngineObj.editorActualObject.transform.position.z); /* slow down update process */  if ((new Date()).getTime()%10==0) {  gameEngineObj.editorInspectorDoTheUpdate(); } } /* event.preventDefault(); */  } );
 
 										$("#"+divEditorStuffPosition+"Objects").bind('mousedown', { element: ""+gameObjTmp.id }, function(event) {  gameEngineObj.editorSetInspectorGameObjectById(event.data.element);  } );
 
@@ -4072,7 +4150,7 @@
 				ComponentCameraRendererJQuery.prototype.updateGraphic=function( sceneGraph, arrayGameobjects )
 				{
 				
-					// this.console("updateGraphic","do");
+					// this.log("updateGraphic","do");
 
 					// is there an existing div for the gameview
 					// create one?
@@ -4137,7 +4215,7 @@
 							$("#"+this.arrActualDivsToDelete[t]).remove();
 						}
 						
-						if (this.arrActualDivsToDelete.length>0) this.console("","Camera: Remove this divs: ("+this.arrActualDivsToDelete.length+") "+strRemoveDivs);
+						if (this.arrActualDivsToDelete.length>0) this.log("","Camera: Remove this divs: ("+this.arrActualDivsToDelete.length+") "+strRemoveDivs);
 						
 						// update here
 						this.arrActualDivsToDelete=this.arrActualDivs;
@@ -4148,7 +4226,7 @@
 					// simple
 				    ComponentCameraRendererJQuery.prototype.updateGraphicDivsRec=function( gameobjectStart, arrayGameobjects )
 					{
-						// this.console("updateGraphicDivsRec","----"+gameobjectStart.name+"-------- ");
+						// this.log("updateGraphicDivsRec","----"+gameobjectStart.name+"-------- ");
 
 						var gameObjTmp;
 						var count=0;
@@ -4162,13 +4240,13 @@
 				
 							 		var divName="divGameObj_"+this.renderToDivName+"_"+correctDivName+"_"+gameObjTmp.id;
 
-									// gameObjTmp.console("system","found "+gameObjTmp.name);
+									// gameObjTmp.log("system","found "+gameObjTmp.name);
 
 									// is there a render/html component?
 									var renderComponent=gameObjTmp.getFirstComponentByType("renderer","html");
 									if (renderComponent!=null)
 									{
-										// renderComponent.console("","foundType(render/html)");
+										// renderComponent.log("","foundType(render/html)");
 										
 										// not auto divName generating
 										if (renderComponent.divName!="auto")
@@ -4334,7 +4412,7 @@
 		  	   // version 2: use attribute system
 		  	ComponentRendererHtml.prototype.exposeEditorAttributes = function()
 			{
-			  	// console("","ComponentRendererHtml.exposeEditorAttributes(alpha)");
+			  	// log("","ComponentRendererHtml.exposeEditorAttributes(alpha)");
 			   // this.resetEditorAttributes();
 			   this.addEditorAttributeByValue( "alpha", "float", "textfield" );
 			   this.addEditorAttributeByValueAndDesc( "divName", "string", "textfield", "'auto' or wished unique divName" );
@@ -4457,7 +4535,7 @@
 					   }
 					   AnimationController.prototype.startAnimation = function( selectedAnimationName )
 					   {
-					   		this.console("","startAnimation("+selectedAnimationName+")");
+					   		this.log("","startAnimation("+selectedAnimationName+")");
 					   		
 					   		// deactive all the rest and start this one
 					   		var arr=this.gameObject.getAllComponentsByName("Animation");
@@ -4552,7 +4630,7 @@
 		  					}
 		  					catch(e)
 		  					{
-		  						this.console("","error with animation-split "+e);
+		  						this.log("","error with animation-split "+e);
 		  					}
 		  					
 		  			   		// set src here
@@ -4611,7 +4689,7 @@
 						    			
 						    			// get actual frame and set it ..
 						    			var animationFile=arrFrames[this.actualFrame];
-						    			// this.console("","update("+this.actualFrame+")");
+						    			// this.log("","update("+this.actualFrame+")");
 						    			this.setSrc(animationFile);
 						    		}
 								}
@@ -4964,10 +5042,10 @@ function dump(arr,level) {
 		  	  ComponentCustom.prototype.name="ComponentCustom";
 			  ComponentCustom.prototype.type="behavior";
 			  ComponentCustom.prototype.typeSub="";
-			  ComponentCustom.prototype.start=function() {  this.console("","COMPONENTCUSTOM.START"); } 
+			  ComponentCustom.prototype.start=function() {  this.log("","COMPONENTCUSTOM.START"); } 
 		  	  ComponentCustom.prototype.update=function() 
 		  	  { 
-		  	  	// this.console(""," key down: "+input.getKey("w")+"---"+input.getKeyCode(65)); 
+		  	  	// this.log(""," key down: "+input.getKey("w")+"---"+input.getKeyCode(65)); 
 		  	  	var speed=1.8; 
 		  	  	if (input.getKeyCode(87)) { this.gameObject.transform.translate(0.0,-speed,0.0); } 
 		  	  	if (input.getKeyCode(83)) { this.gameObject.transform.translate(0.0, speed,0.0); } 
@@ -5007,7 +5085,7 @@ function dump(arr,level) {
 			  		this.addEditorAttributeByValue( "keyDown", "string", "textfield" );
 			  		// this.addEditorAttributeByValue( "keyFire", "string", "textfield" );
 			   }
-			  CharacterController.prototype.start=function() { /* this.console("","CharacterController.START"); */ } 
+			  CharacterController.prototype.start=function() { /* this.log("","CharacterController.START"); */ } 
 		  	  CharacterController.prototype.update=function() 
 		  	  { 
 		  	  	var speed=this.speed; 
@@ -5016,7 +5094,7 @@ function dump(arr,level) {
 		  	  	if (input.getKey(this.keyLeft)) { this.gameObject.transform.translate(-speed,0.0,0.0); }  
 		  	  	if (input.getKey(this.keyRight)) { this.gameObject.transform.translate( speed,0.0,0.0); }  
 		  	  	
-		  	  	// this.console("","update() key:("+this.keyLeft+"/"+input.getKey(this.keyLeft)+")  ");
+		  	  	// this.log("","update() key:("+this.keyLeft+"/"+input.getKey(this.keyLeft)+")  ");
 		  	 }   
 		  	CharacterController.prototype.onCollision = function ( gameObj ) { destroyGameObject(gameObj);  }
 		gameEngineObj.registerComponent(new CharacterController());
@@ -5054,7 +5132,7 @@ function dump(arr,level) {
 			  		
 			  		// this.addEditorAttributeByValue( "keyFire", "string", "textfield" );
 			   }
-			  CharacterControllerCollider.prototype.start=function() { /* this.console("","CharacterControllerCollider.START"); */ } 
+			  CharacterControllerCollider.prototype.start=function() { /* this.log("","CharacterControllerCollider.START"); */ } 
 		  	  CharacterControllerCollider.prototype.update=function() 
 		  	  { 
 		  	  	var speed=this.speed; 
@@ -5063,7 +5141,7 @@ function dump(arr,level) {
 		  	  	if (input.getKey(this.keyLeft)) { if (gameEngineObj.checkCollisionForLabelOffset(this.gameObject,"every",-speed,0)==null) this.gameObject.transform.translate(-speed,0.0,0.0);  }  
 		  	  	if (input.getKey(this.keyRight)) { if (gameEngineObj.checkCollisionForLabelOffset(this.gameObject,"every",speed,0)==null) this.gameObject.transform.translate( speed,0.0,0.0); }  
 		  	  	
-		  	  	// this.console("","update() key:("+this.keyLeft+"/"+input.getKey(this.keyLeft)+")  ");
+		  	  	// this.log("","update() key:("+this.keyLeft+"/"+input.getKey(this.keyLeft)+")  ");
 		  	 }   
 		  	CharacterControllerCollider.prototype.onCollision = function ( gameObj ) {   }
 		gameEngineObj.registerComponent(new CharacterControllerCollider());
@@ -5169,9 +5247,10 @@ function dump(arr,level) {
 		Console - Debug/Warning/Error
 	*/
 	// console - debugging
-	function console(area,msg)
+	// console used by ...
+	function log(area,msg)
 	{
-		gameEngineObj.console(area,msg);
+		gameEngineObj.log(area,msg);
 	}
 
 	function warning(area,msg)
@@ -5246,10 +5325,6 @@ function dump(arr,level) {
 	/*
 		Editor
 	*/
-	function editorLinkVoid()
-	{
-		// return true;
-	}
 	
 	// editorStoreAs
 	function editorStoreAs( strName )
@@ -5341,25 +5416,25 @@ function dump(arr,level) {
 	// $('body').keydown(function (event) { alert(""+event.keyCode+"  "+event.key);  });
 	// keydown
 	
-// $("body").bind('keydown',function (event) { console("","keydown: "+event.keyCode+"/"+event.keyChar+"/"+event.metaKey+"("+event.pageX+","+event.pageX+")"); event.preventDefault(); } );
+// $("body").bind('keydown',function (event) { log("","keydown: "+event.keyCode+"/"+event.keyChar+"/"+event.metaKey+"("+event.pageX+","+event.pageX+")"); event.preventDefault(); } );
 
-// $(window).bind('keydown',function (event) { console("","keydown: "+event.keyCode+"/"+event.keyChar+"/"+event.metaKey+"("+event.pageX+","+event.pageX+")"); /* event.preventDefault();  */ } );
+// $(window).bind('keydown',function (event) { log("","keydown: "+event.keyCode+"/"+event.keyChar+"/"+event.metaKey+"("+event.pageX+","+event.pageX+")"); /* event.preventDefault();  */ } );
 
 //	$("body").bind('keyup',function (event) { alert("keyup"+event); } );
 
 //	$("body").bind('mousedown',function (event) { alert("mousedown"+event); } );
 //	$("body").bind('mouseup',function (event) { alert("mouseup"+event); } );
-//$("body").bind('mouseenter',function (event) { console("","mouseenter: "+event.relatedTarget.src+" / "+event.target); event.preventDefault(); } );
+//$("body").bind('mouseenter',function (event) { log("","mouseenter: "+event.relatedTarget.src+" / "+event.target); event.preventDefault(); } );
 //	$("body").bind('mouseexit',function (event) { alert("mouseexit "+event+" "+event.x); } );
 //	$("body").bind('mouseover',function (event) { alert("mouseover "+event+" "+event.div); } );
 
 	// $("body").bind('keypress',function (event) { alert("keypress "+event.keyCode+" "+event.div); } );
 
-// $(window).bind('mousedown',function (event) { console("","mouseenter: "+event.keyCode+"/"+event.keyChar+"/"+event.metaKey+"--"+event.target+"("+event.pageX+","+event.pageX+")"); /*event.preventDefault();*/ } );
-// $("[divGameObj]").bind('mousedown',function (event) { console("","mousedown divgameobj: "+event.keyCode+"/"+event.keyChar+"/"+event.metaKey+"("+event.pageX+","+event.pageX+")"); /*event.preventDefault();*/ } );
+// $(window).bind('mousedown',function (event) { log("","mouseenter: "+event.keyCode+"/"+event.keyChar+"/"+event.metaKey+"--"+event.target+"("+event.pageX+","+event.pageX+")"); /*event.preventDefault();*/ } );
+// $("[divGameObj]").bind('mousedown',function (event) { log("","mousedown divgameobj: "+event.keyCode+"/"+event.keyChar+"/"+event.metaKey+"("+event.pageX+","+event.pageX+")"); /*event.preventDefault();*/ } );
 
 // mouse move store here ..
-// $(window).bind('mousemove',function (event) { console("","mousemove: "+event.keyCode+"/"+event.keyChar+"/"+event.metaKey+"("+event.pageX+","+event.pageX+")"); event.preventDefault(); } );
+// $(window).bind('mousemove',function (event) { log("","mousemove: "+event.keyCode+"/"+event.keyChar+"/"+event.metaKey+"("+event.pageX+","+event.pageX+")"); event.preventDefault(); } );
 
 
 // eventType
@@ -5407,7 +5482,7 @@ $("test.div").bind(
 
 <script>
 
-
+// alert("abc"+dom.storage.enabled);
 
 </script>
   </body>
